@@ -10,6 +10,10 @@ build/
 dist/
 *.manifest
 
+# NOTE: releases/ holds the ARCHIVED older builds on purpose - they are
+# versioned so the pre-security-fix binaries are kept for the record.
+# See releases/README.md.
+
 # Local runtime data
 *.part
 *.part.state.json

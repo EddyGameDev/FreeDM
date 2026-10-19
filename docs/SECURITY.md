@@ -26,7 +26,7 @@ working document, not a one-off: new findings go here.
 
 ## 2. What was checked, and what it showed
 
-### 2.1 The loopback control server (`control_server.py`)
+### 2.1 The loopback control server (`freedm/control_server.py`)
 
 The most security-sensitive component: it listens on `127.0.0.1` and accepts
 requests from the browser extension.
@@ -102,7 +102,7 @@ unnecessary permission is unnecessary risk. **Fixed:** removed.
 the cookies of a site the extension has host permission for — that is the
 point of the handoff.
 
-### 2.3 The download engine (`engine.py`)
+### 2.3 The download engine (`freedm/engine.py`)
 
 | Check | Result |
 |---|---|
@@ -123,7 +123,7 @@ the download could fail with a 401. **Fixed:** a hand-written `Cookie:` header
 is now put into the session's cookie jar, so it survives redirects *and* is
 scoped to the host it belongs to.
 
-### 2.4 The GUI (`gui.py`)
+### 2.4 The GUI (`freedm/gui.py`)
 
 | Check | Result |
 |---|---|
@@ -138,7 +138,7 @@ not be a single click. **Fixed:** opening a file with an executable or script
 extension (`.exe`, `.bat`, `.cmd`, `.com`, `.ps1`, `.vbs`, `.js`, `.jar`,
 `.scr`, `.msi`, `.lnk`) asks for confirmation first.
 
-### 2.5 The queue database (`store.py`) and the packaging
+### 2.5 The queue database (`freedm/store.py`) and the packaging
 
 | Check | Result |
 |---|---|

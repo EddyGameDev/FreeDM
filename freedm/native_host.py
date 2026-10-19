@@ -27,7 +27,7 @@ import subprocess
 import sys
 import time
 
-from store import app_data_dir
+from freedm.store import app_data_dir
 
 #: The name the browser knows the host by.
 HOST_NAME = "org.freedm.app"

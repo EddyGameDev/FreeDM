@@ -14,10 +14,11 @@ python -m PyInstaller `
     --onefile `
     --windowed `
     --name FreeDM `
+    --paths . `
     --hidden-import requests `
     --collect-submodules requests `
     --add-data "extension;extension" `
-    main.py
+    freedm\main.py
 
 Write-Host ""
 if (Test-Path "dist\FreeDM.exe") {

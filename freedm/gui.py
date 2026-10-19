@@ -12,7 +12,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, simpledialog, ttk
 from urllib.parse import urlparse
 
-from engine import (
+from freedm.engine import (
     Download,
     human_size,
     human_speed,
@@ -29,19 +29,19 @@ from engine import (
     set_global_speed_limit,
     global_speed_limit,
 )
-from store import JobStore
-from settings import load as load_settings, save as save_settings
-from batch import parse_urls, find_url
-from automation import (parse_time, format_time, in_window, describe_schedule,
+from freedm.store import JobStore
+from freedm.settings import load as load_settings, save as save_settings
+from freedm.batch import parse_urls, find_url
+from freedm.automation import (parse_time, format_time, in_window, describe_schedule,
                         seconds_until_epoch, shutdown_command, SHUTDOWN, SLEEP)
-from categories import (default_rules, format_rules, load_rules, parse_rules,
+from freedm.categories import (default_rules, format_rules, load_rules, parse_rules,
                         classify, destination_for, matches_filter,
                         export_queue, import_queue, STATUS_FILTERS)
-from network import PROXY, install_address_preference, address_preference
-import native_host
-from verify import (ALGORITHMS, parse_checksum, find_orphans, cleanup_orphans)
-from scheduler import Scheduler
-from control_server import ControlServer, export_extension, token_path
+from freedm.network import PROXY, install_address_preference, address_preference
+from freedm import native_host
+from freedm.verify import (ALGORITHMS, parse_checksum, find_orphans, cleanup_orphans)
+from freedm.scheduler import Scheduler
+from freedm.control_server import ControlServer, export_extension, token_path
 
 APP_NAME = "FreeDM - Free Download Manager"
 

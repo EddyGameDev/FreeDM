@@ -39,8 +39,8 @@ class GuiTestCase(unittest.TestCase):
 
     def setUp(self) -> None:
         import tkinter as tk
-        from store import JobStore
-        import gui
+        from freedm.store import JobStore
+        from freedm import gui
 
         self.tk = tk
         self.tmp = tempfile.mkdtemp(prefix=self.prefix)

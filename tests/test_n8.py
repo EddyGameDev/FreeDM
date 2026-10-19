@@ -20,9 +20,9 @@ _HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.dirname(_HERE))
 sys.path.insert(0, _HERE)
 
-import control_server                    # noqa: E402
-import native_host                       # noqa: E402
-from control_server import export_extension  # noqa: E402
+import freedm.control_server as control_server                    # noqa: E402
+import freedm.native_host as native_host                       # noqa: E402
+from freedm.control_server import export_extension  # noqa: E402
 from gui_testcase import GuiTestCase      # noqa: E402
 
 
@@ -207,7 +207,7 @@ class NativeHostTests(unittest.TestCase):
 
 class MainEntryPointTests(unittest.TestCase):
     def test_the_native_host_mode_is_wired(self):
-        import main
+        from freedm import main
         with mock.patch.object(native_host, "main", return_value=0) as host:
             code = main.main(["--native-host"])
         self.assertEqual(code, 0)
@@ -220,14 +220,14 @@ class GuiIntegrationTests(GuiTestCase):
     prefix = "freedm_n8_gui_"
 
     def test_the_gui_exposes_the_new_actions(self):
-        import gui
+        from freedm import gui
         for name in ("_export_extension", "_install_native_host",
                      "_uninstall_native_host"):
             self.assertTrue(hasattr(gui.App, name), name)
 
     def test_export_for_firefox_uses_the_firefox_manifest(self):
         folder = os.path.join(self.tmp, "ff")
-        with mock.patch("gui.export_extension",
+        with mock.patch("freedm.gui.export_extension",
                         return_value=folder) as export:
             # `_open` would start Explorer: never do that in a test.
             with mock.patch.object(self.app, "_open"):
@@ -238,7 +238,7 @@ class GuiIntegrationTests(GuiTestCase):
 
     def test_export_for_chrome_uses_the_chrome_manifest(self):
         folder = os.path.join(self.tmp, "cr")
-        with mock.patch("gui.export_extension",
+        with mock.patch("freedm.gui.export_extension",
                         return_value=folder) as export:
             with mock.patch.object(self.app, "_open"):
                 with mock.patch.object(self.tk.messagebox, "showinfo"):
@@ -247,7 +247,7 @@ class GuiIntegrationTests(GuiTestCase):
         self.assertEqual(export.call_args.kwargs.get("browser"), "chrome")
 
     def test_installing_the_native_host_reports_the_result(self):
-        with mock.patch("gui.native_host.install_host",
+        with mock.patch("freedm.gui.native_host.install_host",
                         return_value=(True, "installed ok")) as install:
             with mock.patch.object(self.tk.messagebox, "showinfo") as info:
                 self.app._install_native_host()
@@ -255,7 +255,7 @@ class GuiIntegrationTests(GuiTestCase):
         self.assertTrue(info.called)
 
     def test_uninstalling_the_native_host_reports_the_result(self):
-        with mock.patch("gui.native_host.uninstall_host",
+        with mock.patch("freedm.gui.native_host.uninstall_host",
                         return_value=(True, "removed")) as remove:
             with mock.patch.object(self.tk.messagebox, "showinfo") as info:
                 self.app._uninstall_native_host()

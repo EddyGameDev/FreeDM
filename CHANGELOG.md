@@ -89,6 +89,37 @@ First public build.
 - The windowed build has no console, so CLI progress is silent in the
   packaged app.
 
+## [v1.3.1] - 2026-10-19
+
+Repository reorganisation and an archive of the older builds. No behaviour
+change.
+
+### Build
+
+- `FreeDM-1.3.1.exe` - Windows x64, single file, no installer (17.6 MB).
+- SHA-256: `9e001ada042afc74ddb54f5628ecf4d7ccf3610692484cd2ce9d75db4dc129a6`
+- Verify with: `certutil -hashfile FreeDM-1.3.1.exe SHA256`
+- Source: <https://github.com/EddyGameDev/FreeDM>
+
+### Changed
+
+- **The application moved into the `freedm/` package.** The thirteen modules
+  that used to sit loose in the project root are now `freedm/engine.py`,
+  `freedm/store.py`, `freedm/gui.py` and so on, and are imported as
+  `freedm.<module>`. The root now holds only the project files: the extension,
+  the tests, the documentation, the release tooling and the archived builds.
+- The entry point moved with it: `python main.py ...` is now
+  `python -m freedm.main ...` (or `python freedm/main.py`, which still works).
+  The packaged app is unchanged: `FreeDM.exe URL -o DIR` behaves as before.
+- The build script now packages `freedm/main.py`.
+
+### Added
+
+- **`releases/`** keeps the builds that were published before the security
+  fixes of v1.2.1 (`v1.0.0`, `v1.1.0`, `v1.2.0`), each with its notes, its
+  SHA-256 and a notice explaining why it is superseded. They are archived for
+  the record; **use the latest release instead**.
+
 ## [v1.3.0] - 2026-10-19
 
 Browser extras: Firefox support, a right-click menu, and native messaging.

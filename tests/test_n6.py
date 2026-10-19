@@ -19,12 +19,12 @@ _HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.dirname(_HERE))
 sys.path.insert(0, _HERE)
 
-import automation                        # noqa: E402
+import freedm.automation as automation                        # noqa: E402
 import range_server                      # noqa: E402
-from engine import Download, DONE, ERROR, QUEUED, SCHEDULED  # noqa: E402
-from scheduler import Scheduler          # noqa: E402
-from store import JobStore               # noqa: E402
-import settings as S                     # noqa: E402
+from freedm.engine import Download, DONE, ERROR, QUEUED, SCHEDULED  # noqa: E402
+from freedm.scheduler import Scheduler          # noqa: E402
+from freedm.store import JobStore               # noqa: E402
+from freedm import settings as S                     # noqa: E402
 from gui_testcase import GuiTestCase      # noqa: E402
 
 
@@ -316,7 +316,7 @@ class GuiIntegrationTests(GuiTestCase):
         self.app._apply_window()
         self.assertEqual(self.app.window_start, 60)
         self.assertEqual(self.app.window_end, 360)
-        from settings import load
+        from freedm.settings import load
         prefs = load(self.store)
         self.assertEqual(prefs["window_start"], "01:00")
         self.assertEqual(prefs["window_end"], "06:00")
@@ -332,7 +332,7 @@ class GuiIntegrationTests(GuiTestCase):
     def test_shutdown_toggle_is_persisted(self):
         self.app.shutdown_var.set(True)
         self.app._toggle_shutdown()
-        from settings import load
+        from freedm.settings import load
         self.assertTrue(load(self.store)["shutdown_when_done"])
         self.app.shutdown_var.set(False)
         self.app._toggle_shutdown()
@@ -354,7 +354,7 @@ class GuiIntegrationTests(GuiTestCase):
         self.app._toggle_shutdown()
         with mock.patch.object(self.tk.messagebox, "askyesno",
                                return_value=False) as ask:
-            with mock.patch("gui.subprocess.Popen") as popen:
+            with mock.patch("freedm.gui.subprocess.Popen") as popen:
                 self.app._check_shutdown_when_done()
         self.assertTrue(ask.called)
         self.assertFalse(popen.called, "must not power off without a yes")
@@ -364,7 +364,7 @@ class GuiIntegrationTests(GuiTestCase):
         self.app._toggle_shutdown()
         with mock.patch.object(self.tk.messagebox, "askyesno",
                                return_value=True):
-            with mock.patch("gui.subprocess.Popen") as popen:
+            with mock.patch("freedm.gui.subprocess.Popen") as popen:
                 self.app._check_shutdown_when_done()
         self.assertTrue(popen.called)
 
@@ -379,7 +379,7 @@ class GuiIntegrationTests(GuiTestCase):
         self.assertTrue(info.called)
 
     def test_gui_exposes_the_automation_actions(self):
-        import gui
+        from freedm import gui
         for name in ("schedule_dialog", "_apply_window", "_toggle_shutdown",
                      "_check_shutdown_when_done", "_queue_is_empty"):
             self.assertTrue(hasattr(gui.App, name), name)

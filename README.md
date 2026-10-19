@@ -187,47 +187,31 @@ below if you want live CLI progress.)
 
 ```
 FreeDM/
+├── freedm/                 # THE APPLICATION (import as `freedm.*`)
+│   ├── main.py             # entry point: GUI / CLI / self-tests / native host
+│   ├── engine.py           # download engine (segments, resume, retry, limits)
+│   ├── store.py            # SQLite queue (jobs, segments, settings)
+│   ├── scheduler.py        # active/connection/host caps + FIFO queue
+│   ├── settings.py         # typed settings (folder, threads, limit, window)
+│   ├── batch.py            # batch URL parsing + clipboard link detection
+│   ├── verify.py           # size/checksum verification + orphan cleanup
+│   ├── categories.py       # categories, list filter, queue export/import
+│   ├── automation.py       # scheduled starts, daily window, shut-down
+│   ├── network.py          # proxy, IPv4/IPv6 preference, mirror sources
+│   ├── native_host.py      # native messaging host (starts the app)
+│   ├── control_server.py   # loopback browser-handoff endpoint (token auth)
+│   └── gui.py              # Tkinter GUI
+├── extension/              # MV3 browser extension (Chrome/Edge/Firefox)
+├── tests/                  # the regression suites
+├── scripts/                # release tooling
+├── docs/                   # documentation
+├── releases/               # ARCHIVED older builds (see releases/README.md)
+├── dist/FreeDM.exe         # the built application
 ├── LICENSE                 # PolyForm Noncommercial 1.0.0 (full text)
 ├── NOTICE                  # copyright notice / Required Notice line
 ├── CHANGELOG.md            # per-build patch notes (source of truth)
-├── .gitignore              # build artefacts, caches, partial downloads
-├── engine.py              # download engine (segments, resume, retry, limits)
-├── store.py               # SQLite queue (jobs, segments, settings)
-├── settings.py            # typed settings (folder, threads, limit, window)
-├── batch.py               # batch URL parsing + clipboard link detection
-├── verify.py              # size/checksum verification + orphan cleanup
-├── categories.py          # categories, list filter, queue export/import
-├── automation.py          # scheduled starts, daily window, shut-down
-├── native_host.py          # native messaging host (starts the app)
-├── network.py             # proxy, IPv4/IPv6 preference, mirror sources
-├── scheduler.py           # active/connection/host caps + FIFO queue
-├── control_server.py      # loopback browser-handoff endpoint (token auth)
-├── extension/             # MV3 browser extension (Chrome/Edge)
-├── gui.py                 # Tkinter GUI
-├── main.py                # entry point (GUI / CLI / --selftest / --browser-selftest)
-├── build.ps1              # rebuild dist\FreeDM.exe
-├── requirements.txt
-├── tests/
-│   ├── range_server.py    # local HTTP server with Range + ETag + gated paths
-│   ├── crash_session1.py  # simulates a crash mid-download
-│   ├── test_w1.py         # W1 control-server/handoff tests
-│   ├── test_w2.py         # W2 session/cookie/header/redirect tests
-│   ├── test_w3.py         # W3 queue persistence/DB resume tests
-│   ├── test_w4.py         # W4 caps/FIFO/Retry-After tests
-│   ├── test_w5.py         # W5 integrity/overwrite/disk tests
-│   ├── test_n1.py         # N1 settings/migration/live-limit tests
-│   ├── test_n2.py         # N2 batch parsing/clipboard tests
-│   ├── test_n3.py         # N3 verification/cleanup tests
-│   ├── test_n4.py         # N4 dynamic segmentation/global limit tests
-│   ├── test_n5.py         # N5 categories/filter/export-import tests
-│   ├── test_n6.py         # N6 scheduling/window/shut-down tests
-│   ├── test_n7.py         # N7 proxy/address-family/mirror tests
-│   ├── test_n8.py         # N8 Firefox/context-menu/native-host tests
-│   ├── test_security.py   # security regressions
-│   ├── test_changelog.py  # release-notes tooling tests
-│   └── gui_testcase.py    # shared GUI test base (temp folder, no downloads)
-├── dist/FreeDM.exe        # the built application
-└── build/                 # PyInstaller intermediate files
+├── build.ps1               # rebuild dist\FreeDM.exe
+└── requirements.txt
 ```
 
 ## Security
@@ -300,7 +284,7 @@ For a manual download, start the Range-capable test server and run:
 
 ```
 python tests\range_server.py 8765 20
-python main.py "http://127.0.0.1:8765/test.bin" -o %TEMP%\freedm_test -t 8
+python -m freedm.main "http://127.0.0.1:8765/test.bin" -o %TEMP%\freedm_test -t 8
 ```
 
 `--selftest` runs a headless download and writes the result to a log file

@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.dirname(_HERE))
 sys.path.insert(0, _HERE)
 
 import range_server  # noqa: E402
-from engine import Download, DONE, ERROR, CANCELED  # noqa: E402
+from freedm.engine import Download, DONE, ERROR, CANCELED  # noqa: E402
 
 
 def sha256(path: str) -> str:
@@ -186,7 +186,7 @@ class W5Tests(unittest.TestCase):
     # -- B9: disk space ---------------------------------------------------
     def test_disk_space_precheck(self):
         dl = Download(self.url(), dest_dir=self.out, num_threads=4)
-        with mock.patch("engine.shutil.disk_usage",
+        with mock.patch("freedm.engine.shutil.disk_usage",
                         return_value=SimpleNamespace(free=0)):
             with self.assertRaises(IOError) as ctx:
                 dl._probe()

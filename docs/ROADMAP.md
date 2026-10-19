@@ -35,11 +35,11 @@ Effort is rough developer time: **S** ≈ ≤1 day, **M** ≈ 2–4 days,
 | # | Item | Effort | Notes |
 |---|---|---|---|
 | ~~P0.1~~ | ~~**Overwrite / rename confirmation**~~ | ~~S~~ | **DONE (W5).** `on_existing="rename"` is the default; `overwrite`/`cancel`/callback also supported. |
-| ~~P0.2~~ | ~~**Persist settings** (last folder, threads, speed limit, window size)~~ | ~~S~~ | **DONE (N1).** `settings.py` + the `settings` table — no separate JSON file needed. Persists `last_dir`, `threads`, `speed_limit`, `window`, plus the earlier toggles. |
+| ~~P0.2~~ | ~~**Persist settings** (last folder, threads, speed limit, window size)~~ | ~~S~~ | **DONE (N1).** `freedm/settings.py` + the `settings` table — no separate JSON file needed. Persists `last_dir`, `threads`, `speed_limit`, `window`, plus the earlier toggles. |
 | ~~P0.3~~ | ~~**Per-download speed limit in the GUI**~~ | ~~S~~ | **DONE (N1).** **Limit...** sets a live cap on the selection (`Download.set_speed_limit`) and the default for new downloads; persisted per job. |
 | ~~P0.4~~ | ~~**Retry failed downloads from the UI**~~ | ~~S~~ | **DONE (N1).** **Resume** restarts `error`/`canceled` jobs (re-probe + resume from `.part`); **Details...** explains the failure. |
 | ~~P0.5~~ | ~~**Show error details on hover / dialog**~~ | ~~S~~ | **DONE (N1).** **Details...** shows the full untruncated error, URL, destination, size, progress and limit. |
-| P0.6 | **Separate console build** (`FreeDM-cli.exe`) | S | Build a second exe with `--console` so CLI users get live progress. Reuse `main.py`. |
+| P0.6 | **Separate console build** (`FreeDM-cli.exe`) | S | Build a second exe with `--console` so CLI users get live progress. Reuse `freedm/main.py`. |
 | P0.7 | **Fix stale `build\` churn** | S | Add `build\`, `__pycache__\`, `dist\` to a `.gitignore` if version-controlled. |
 | P0.8 | **App icon** | S | Add `icon.ico`; pass `--icon` in `build.ps1`. |
 
@@ -49,8 +49,8 @@ Effort is rough developer time: **S** ≈ ≤1 day, **M** ≈ 2–4 days,
 
 | # | Item | Effort | Notes |
 |---|---|---|---|
-| ~~P1.1~~ | ~~**Download queue with concurrency limit**~~ | ~~M~~ | **DONE (W4).** `scheduler.py`: active/connection/per-host caps, FIFO, Start Now/reorder, 429/503 backoff. |
-| ~~P1.2~~ | ~~**Categories** (Video / Music / Documents / Archives / Programs)~~ | ~~M~~ | **DONE (N5).** `categories.py`; editable rules, **Sort into category folders** toggle, `Other` fallback. |
+| ~~P1.1~~ | ~~**Download queue with concurrency limit**~~ | ~~M~~ | **DONE (W4).** `freedm/scheduler.py`: active/connection/per-host caps, FIFO, Start Now/reorder, 429/503 backoff. |
+| ~~P1.2~~ | ~~**Categories** (Video / Music / Documents / Archives / Programs)~~ | ~~M~~ | **DONE (N5).** `freedm/categories.py`; editable rules, **Sort into category folders** toggle, `Other` fallback. |
 | ~~P1.3~~ | ~~**Batch add** (paste many URLs)~~ | ~~M~~ | **DONE (N2).** `batch.parse_urls`; the URL box adds every pasted http(s) line, reports invalid entries, skips duplicates. |
 | P1.4 | **Drag-and-drop URLs** | M | Tkinter needs `tkinterdnd2` (free) or a native hook. |
 | ~~P1.5~~ | ~~**Clipboard monitor** ("grab URL from clipboard")~~ | ~~S~~ | **DONE (N2).** Opt-in **Watch clipboard** toggle (`clipboard_monitor`, off by default); offers a copied link with confirmation via `batch.find_url`. |
@@ -75,7 +75,7 @@ Effort is rough developer time: **S** ≈ ≤1 day, **M** ≈ 2–4 days,
 
 | # | Item | Effort | Notes |
 |---|---|---|---|
-| ~~P3.1~~ | ~~**SQLite history + queue**~~ | ~~M~~ | **DONE (W3).** `store.py`: `downloads`, `segments`, `settings`; survives restarts. Search/filter (P3.2) still open. |
+| ~~P3.1~~ | ~~**SQLite history + queue**~~ | ~~M~~ | **DONE (W3).** `freedm/store.py`: `downloads`, `segments`, `settings`; survives restarts. Search/filter (P3.2) still open. |
 | ~~P3.2~~ | ~~**Search / filter history**~~ | ~~S~~ | **DONE (N5).** Search box + status filter; rows are hidden live without reloading. |
 | ~~P3.3~~ | ~~**Export / import URL list**~~ | ~~S~~ | **DONE (N5).** **Export...**/**Import...**; JSON keeps every field, plain URL lists also import. |
 | ~~P3.4~~ | ~~**Open-file-location history actions**~~ | ~~S~~ | **DONE (N5).** **Show in Folder** reveals the file in Explorer; **Open File** falls back to the folder. |
@@ -89,7 +89,7 @@ Effort is rough developer time: **S** ≈ ≤1 day, **M** ≈ 2–4 days,
 | ~~P4.1~~ | ~~**Chrome/Edge extension** (Manifest V3)~~ | ~~M~~ | **DONE (W1).** `extension/`: intercepts new downloads, forwards URL/cookies/referer/UA, cancels the browser copy, resumes it when FreeDM is closed. |
 | ~~P4.2~~ | ~~**Firefox extension**~~ | ~~M~~ | **DONE (N8).** The same source with a Firefox manifest (background page, gecko id); **Export for Firefox...** in the Browser dialog. |
 | ~~P4.3~~ | ~~**Native messaging host**~~ | ~~M~~ | **DONE (N8).** `FreeDM.exe --native-host`; register it from the Browser dialog so the extension can start the app. |
-| ~~P4.4~~ | ~~**Local control server**~~ | ~~S~~ | **DONE (W1).** `control_server.py`: loopback-only `GET /ping` + token-protected `POST /add`. |
+| ~~P4.4~~ | ~~**Local control server**~~ | ~~S~~ | **DONE (W1).** `freedm/control_server.py`: loopback-only `GET /ping` + token-protected `POST /add`. |
 | ~~P4.5~~ | ~~**"Download with FreeDM" context menu**~~ | ~~S~~ | **DONE (N8).** Right-click a link, a video or a page to hand it to FreeDM. |
 | ~~P4.6~~ | ~~**Forward cookies / referer / user-agent**~~ | ~~M~~ | **DONE (W2 engine + W1 wiring).** The extension now supplies cookies/referer/UA on every handoff. |
 
@@ -101,7 +101,7 @@ Effort is rough developer time: **S** ≈ ≤1 day, **M** ≈ 2–4 days,
 |---|---|---|---|
 | ~~P5.1~~ | ~~**Dynamic segmentation** (IDM-style)~~ | ~~M~~ | **DONE (N4).** Work queue: workers take the largest pending piece and split it, so a slow pipe holds back less. |
 | ~~P5.2~~ | ~~**Adaptive piece sizing**~~ | ~~S~~ | **DONE (N4).** Piece target (1–8 MB) follows the *slowest* recent connection. |
-| ~~P5.3~~ | ~~**Checksum verification** (SHA-256/MD5)~~ | ~~S~~ | **DONE (N3).** `verify.py`; `Download(checksum=…)`, GUI **Checksum...**, mismatch fails the job and shows both digests. |
+| ~~P5.3~~ | ~~**Checksum verification** (SHA-256/MD5)~~ | ~~S~~ | **DONE (N3).** `freedm/verify.py`; `Download(checksum=…)`, GUI **Checksum...**, mismatch fails the job and shows both digests. |
 | ~~P5.4~~ | ~~**Mirror / multi-source downloads**~~ | ~~M~~ | **DONE (N7).** Mirrors are tried in turn by the probe and the download; the file comes from whichever source answers. |
 | ~~P5.5~~ | ~~**Proxy support** (HTTP/SOCKS, auth)~~ | ~~M~~ | **DONE (N7).** Shared proxy configuration with credentials, a bypass list and a connection check in the GUI. |
 | P5.6 | **Cookie jar / login support** | M | Import from browser or manual. |

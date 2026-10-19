@@ -21,10 +21,10 @@ _HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.dirname(_HERE))
 sys.path.insert(0, _HERE)
 
-import control_server                    # noqa: E402
+import freedm.control_server as control_server                    # noqa: E402
 import requests                          # noqa: E402
-from control_server import ControlServer, _host_allowed, _normalise  # noqa: E402
-from engine import Download, sanitize_filename  # noqa: E402
+from freedm.control_server import ControlServer, _host_allowed, _normalise  # noqa: E402
+from freedm.engine import Download, sanitize_filename  # noqa: E402
 from gui_testcase import GuiTestCase      # noqa: E402
 
 TOKEN = "test-token-0123456789"
@@ -234,13 +234,13 @@ class GuiExecutableTests(GuiTestCase):
         return dl
 
     def test_opening_an_executable_asks_first(self):
-        import gui
+        from freedm import gui
         self.assertIn(".exe", gui.EXECUTABLE_EXTENSIONS)
         self.assertIn(".bat", gui.EXECUTABLE_EXTENSIONS)
         self.assertIn(".ps1", gui.EXECUTABLE_EXTENSIONS)
 
     def test_a_plain_file_is_not_asked_about(self):
-        import gui
+        from freedm import gui
         self.assertNotIn(".txt", gui.EXECUTABLE_EXTENSIONS)
         self.assertNotIn(".zip", gui.EXECUTABLE_EXTENSIONS)
 

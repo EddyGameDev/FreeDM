@@ -20,9 +20,9 @@ sys.path.insert(0, os.path.dirname(_HERE))
 sys.path.insert(0, _HERE)
 
 import range_server                      # noqa: E402
-from engine import Download, RateLimiter, DONE, ERROR, CANCELED  # noqa: E402
-from store import JobStore               # noqa: E402
-import settings as S                     # noqa: E402
+from freedm.engine import Download, RateLimiter, DONE, ERROR, CANCELED  # noqa: E402
+from freedm.store import JobStore               # noqa: E402
+from freedm import settings as S                     # noqa: E402
 
 
 def wait_for(dl: Download, timeout: float = 120) -> str:

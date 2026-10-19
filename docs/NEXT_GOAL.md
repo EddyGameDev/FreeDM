@@ -18,9 +18,9 @@ without re-analysing the code.
 |---|---|---|
 | 2026-10-19 | **W5 — integrity & UX safety** | **DONE.** ETag/Last-Modified + `If-Range` resume validation, auto-restart on remote change, overwrite policy (rename/overwrite/cancel/callback), disk-space precheck, Range-loss fallback, worker error propagation. 10/10 tests pass; frozen exe re-verified. |
 | 2026-10-19 | **W2 — session & header fidelity** | **DONE.** Per-download `requests.Session` with connection pooling, cookie jar (dict/string/extension-list), custom headers (Referer, Cookie, Authorization...), redirect `final_url` reuse, `Accept-Encoding: identity`, clear 401/403 errors, GUI `Headers...` dialog. 10/10 tests pass; frozen exe re-verified. |
-| 2026-10-19 | **W3 — persistent queue & auto-resume** | **DONE.** `store.py` SQLite job store, schema + settings, engine persistence hooks, DB segment fallback when the JSON sidecar is lost, GUI reload/auto-resume with a toggle, remove/clear delete rows, close preserves partials. 9/9 tests pass (including 5-job close/reopen). Also fixed a rate-limiter hang when the speed cap was below one 128 KiB chunk. |
-| 2026-10-19 | **W4 — polite concurrency & queue control** | **DONE.** `scheduler.py`: active-download cap (default 3), total-connection cap (64), per-host cap (12), FIFO queue with Start Now / Move Up / Move Down, queued status, and `Retry-After` handling for 429/503. GUI shows queued counts and persists the active cap. 7/7 tests pass; full regression green. Also fixed a pause-during-probe race. |
-| 2026-10-19 | **W1 — browser handoff** | **DONE.** `control_server.py` (loopback-only, token-authenticated) with `GET /ping` and `POST /add`; MV3 extension (`extension/`) pauses a browser download, pings FreeDM, forwards URL/cookies/referer/UA/filename, then cancels the browser copy — or resumes it when FreeDM is closed or rejects the request. GUI **Browser...** dialog (token, enable toggle, Export extension). 13/13 tests pass; frozen `--browser-selftest` PASS. |
+| 2026-10-19 | **W3 — persistent queue & auto-resume** | **DONE.** `freedm/store.py` SQLite job store, schema + settings, engine persistence hooks, DB segment fallback when the JSON sidecar is lost, GUI reload/auto-resume with a toggle, remove/clear delete rows, close preserves partials. 9/9 tests pass (including 5-job close/reopen). Also fixed a rate-limiter hang when the speed cap was below one 128 KiB chunk. |
+| 2026-10-19 | **W4 — polite concurrency & queue control** | **DONE.** `freedm/scheduler.py`: active-download cap (default 3), total-connection cap (64), per-host cap (12), FIFO queue with Start Now / Move Up / Move Down, queued status, and `Retry-After` handling for 429/503. GUI shows queued counts and persists the active cap. 7/7 tests pass; full regression green. Also fixed a pause-during-probe race. |
+| 2026-10-19 | **W1 — browser handoff** | **DONE.** `freedm/control_server.py` (loopback-only, token-authenticated) with `GET /ping` and `POST /add`; MV3 extension (`extension/`) pauses a browser download, pings FreeDM, forwards URL/cookies/referer/UA/filename, then cancels the browser copy — or resumes it when FreeDM is closed or rejects the request. GUI **Browser...** dialog (token, enable toggle, Export extension). 13/13 tests pass; frozen `--browser-selftest` PASS. |
 
 ---
 
@@ -87,7 +87,7 @@ Each workstream lists **what to build**, **acceptance criteria**, and **how**.
 ### W1 — Browser handoff  (addresses B1)  ✅ **DONE 2026-10-19**
 
 **What shipped:**
-- `control_server.py`: `ThreadingHTTPServer` bound to `127.0.0.1:6801`
+- `freedm/control_server.py`: `ThreadingHTTPServer` bound to `127.0.0.1:6801`
   (configurable via the constructor; tests use port 0). Endpoints:
   - `GET /ping` → `{ok, app:"FreeDM", port}` (no token; used for detection).
   - `POST /add` → normalises `{url, cookies, referer, user_agent, filename,
@@ -156,7 +156,7 @@ plus cookies.
 ### W3 — Persistent queue & auto-resume  (addresses B3)  ✅ **DONE 2026-10-19**
 
 **What shipped:**
-- New `store.py` with `JobStore`, a thread-safe SQLite wrapper at
+- New `freedm/store.py` with `JobStore`, a thread-safe SQLite wrapper at
   `%APPDATA%\FreeDM\freedm.db` (`FREEDM_DB` overrides it for tests).
 - Schema: `downloads` (url, final_url, dest_dir, filename, size, downloaded,
   threads, status, headers_json, etag, last_modified, error, timestamps),
@@ -194,7 +194,7 @@ not persisted at all. See `FEATURES.md` §F.
 ### W4 — Polite concurrency & queue control  (addresses B4)  ✅ **DONE 2026-10-19**
 
 **What shipped:**
-- New `scheduler.py` (`Scheduler`) above `Download`: FIFO queue, queued →
+- New `freedm/scheduler.py` (`Scheduler`) above `Download`: FIFO queue, queued →
   active transitions, and automatic refill as slots free.
 - Caps: `max_active` (default 3, GUI setting), `max_connections` (64) and
   `max_per_host` (12) keyed by `urlparse(...).netloc`. Each job's effective

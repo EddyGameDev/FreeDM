@@ -21,9 +21,9 @@ sys.path.insert(0, os.path.dirname(_HERE))
 sys.path.insert(0, _HERE)
 
 import range_server                      # noqa: E402
-import verify                            # noqa: E402
-from engine import Download, DONE, ERROR  # noqa: E402
-from store import JobStore               # noqa: E402
+import freedm.verify as verify                            # noqa: E402
+from freedm.engine import Download, DONE, ERROR  # noqa: E402
+from freedm.store import JobStore               # noqa: E402
 from gui_testcase import GuiTestCase      # noqa: E402
 
 
@@ -354,13 +354,13 @@ class GuiIntegrationTests(GuiTestCase):
 
     def test_cleanup_age_round_trips_through_settings(self):
         self.app.cleanup_days = 14
-        from settings import save
+        from freedm.settings import save
         save(self.store, cleanup_days=self.app.cleanup_days)
-        from settings import load
+        from freedm.settings import load
         self.assertEqual(load(self.store)["cleanup_days"], 14)
 
     def test_gui_exposes_the_new_dialogs(self):
-        import gui
+        from freedm import gui
         self.assertTrue(hasattr(gui.App, "checksum_dialog"))
         self.assertTrue(hasattr(gui.App, "cleanup_dialog"))
 

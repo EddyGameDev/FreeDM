@@ -16,11 +16,11 @@ import time
 from collections import Counter
 from urllib.parse import urlparse
 
-from engine import (
+from freedm.engine import (
     Download, DONE, ERROR, CANCELED, PAUSED, PROBING, DOWNLOADING, QUEUED,
     SCHEDULED,
 )
-from automation import in_window, seconds_until_epoch
+from freedm.automation import in_window, seconds_until_epoch
 
 DEFAULT_MAX_ACTIVE = 3
 DEFAULT_MAX_CONNECTIONS = 64
@@ -72,7 +72,7 @@ class Scheduler:
             start, end = self.window_start, self.window_end
         if start is None or end is None or start == end:
             return "no time limit"
-        from automation import format_time
+        from freedm.automation import format_time
         return f"only between {format_time(start)} and {format_time(end)}"
 
     def _window_allows(self, dl: Download) -> bool:

@@ -15,7 +15,13 @@ import os
 import sys
 import time
 
-from engine import Download, human_size, human_speed, human_time, DONE, ERROR, CANCELED
+if __package__ in (None, ""):
+    # Started as a script (`python freedm/main.py`): make the package
+    # importable by putting its parent directory on the path.
+    sys.path.insert(0, os.path.dirname(
+        os.path.dirname(os.path.abspath(__file__))))
+
+from freedm.engine import Download, human_size, human_speed, human_time, DONE, ERROR, CANCELED
 
 
 def _emit(text: str) -> None:
@@ -109,7 +115,7 @@ def _browser_selftest(argv: list[str]) -> int:
 
     lines = [f"frozen={getattr(sys, 'frozen', False)}", f"python={sys.version}"]
     try:
-        from control_server import ControlServer, export_extension
+        from freedm.control_server import ControlServer, export_extension
         received: list[dict] = []
         srv = ControlServer(on_add=lambda job: (received.append(job), 1)[1],
                             token="selftest-token", port=0)
@@ -157,11 +163,11 @@ def main(argv: list[str] | None = None) -> int:
         return _browser_selftest(argv[1:])
 
     if argv and argv[0] == "--native-host":
-        import native_host
+        from freedm import native_host
         return native_host.main()
 
     if not argv:
-        from gui import run_gui
+        from freedm.gui import run_gui
         run_gui()
         return 0
 

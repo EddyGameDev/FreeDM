@@ -71,7 +71,7 @@ Credential Manager, so `git push` works without any token in the remote URL.
 #    (### Build with the file name, size and SHA-256, then Added/Changed/Fixed)
 
 # 2. build it
-powershell -ExecutionPolicy Bypass -File build.ps1
+powershell -ExecutionPolicy Bypass -File build.ps1   # entry point: freedm\main.py
 
 # 3. record the real hash in CHANGELOG.md
 certutil -hashfile dist\FreeDM.exe SHA256

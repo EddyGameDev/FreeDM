@@ -19,11 +19,11 @@ _HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.dirname(_HERE))
 sys.path.insert(0, _HERE)
 
-import categories                        # noqa: E402
+import freedm.categories as categories                        # noqa: E402
 import range_server                      # noqa: E402
-from engine import Download, DONE        # noqa: E402
-from store import JobStore               # noqa: E402
-import settings as S                     # noqa: E402
+from freedm.engine import Download, DONE        # noqa: E402
+from freedm.store import JobStore               # noqa: E402
+from freedm import settings as S                     # noqa: E402
 from gui_testcase import GuiTestCase      # noqa: E402
 
 
@@ -269,7 +269,7 @@ class GuiIntegrationTests(GuiTestCase):
     def test_filter_is_remembered(self):
         self.app.filter_text.set("keepme")
         self.app._apply_filter()
-        from settings import load
+        from freedm.settings import load
         self.assertEqual(load(self.store)["filter_text"], "keepme")
 
     def test_auto_sort_uses_the_category_folder(self):
@@ -309,7 +309,7 @@ class GuiIntegrationTests(GuiTestCase):
         self.assertEqual(self._rows(), 2)
 
     def test_gui_exposes_the_new_actions(self):
-        import gui
+        from freedm import gui
         for name in ("categories_dialog", "export_queue_dialog",
                      "import_queue_dialog", "show_in_folder", "_apply_filter",
                      "_refresh_visible", "_dest_resolver", "_target_dir"):

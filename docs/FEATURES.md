@@ -9,106 +9,106 @@ limited. **Planned** = not yet built (see `ROADMAP.md`).
 
 | # | Feature | Status | Where |
 |---|---|---|---|
-| A1 | HTTP and HTTPS downloads | Implemented | `engine.py` → `Download` |
-| A2 | Multi-threaded segmented download using `Range` | Implemented | `engine.py` → `_download_segmented`, `_worker`, `_download_segment` |
+| A1 | HTTP and HTTPS downloads | Implemented | `freedm/engine.py` → `Download` |
+| A2 | Multi-threaded segmented download using `Range` | Implemented | `freedm/engine.py` → `_download_segmented`, `_worker`, `_download_segment` |
 | A3 | Configurable thread count, 1–32 | Implemented | `Download(num_threads=...)`, `_make_segments` |
-| A4 | More pieces than threads (load balancing) | Implemented | `engine.py` → `_make_segments` |
-| A5 | Single-stream fallback when no Range support | Implemented | `engine.py` → `_download_single` |
-| A6 | Server capability probe (HEAD + ranged GET) | Implemented | `engine.py` → `_probe` |
-| A7 | Filename from `Content-Disposition` or URL path | Implemented | `engine.py` → `_filename_from_headers`, `_guess_filename` |
-| A8 | Filename sanitising for Windows | Implemented | `engine.py` → `sanitize_filename` |
-| A9 | Pause | Implemented | `engine.py` → `pause` |
-| A10 | Resume after pause | Implemented | `engine.py` → `resume` |
-| A11 | Cancel (deletes partial + state) | Implemented | `engine.py` → `cancel`, `_cleanup_partial` |
-| A12 | Resume after crash / reboot | Implemented | `engine.py` → `_save_state`, `_load_state` |
-| A13 | Retry per piece with exponential backoff (6 tries) | Implemented | `engine.py` → `_download_segment` |
-| A14 | Handle HTTP 416 (piece already complete) | Implemented | `engine.py` → `_download_segment` |
-| A15 | Detect a server ignoring `Range` on resume and abort safely | Implemented | `engine.py` → `_download_segment` |
-| A16 | Atomic finalize (`.part` → final file) | Implemented | `engine.py` → `_finalize` |
-| A17 | Speed limit (token bucket), settable live per download | Implemented (N1 adds live set) | `engine.py` → `RateLimiter`, `Download.set_speed_limit` |
-| A18 | Live speed / ETA / progress calculation | Implemented | `engine.py` → `_start_monitor`, `progress`, `eta` |
-| A19 | Thread-safe snapshot for UI | Implemented | `engine.py` → `snapshot` |
-| A20 | Unknown file size handled (streaming) | Implemented | `engine.py` → `_download_single` |
-| A21 | Custom request headers | Implemented (W2; GUI dialog + API) | `Download(headers=...)`, `gui.py` → `_edit_headers` |
-| A22 | Per-connection connect/read timeouts | Implemented | constants in `engine.py` |
-| A23 | Dynamic mid-download re-segmentation | Implemented (N4) | `engine.py` → `_claim_piece`, `_split_piece` |
+| A4 | More pieces than threads (load balancing) | Implemented | `freedm/engine.py` → `_make_segments` |
+| A5 | Single-stream fallback when no Range support | Implemented | `freedm/engine.py` → `_download_single` |
+| A6 | Server capability probe (HEAD + ranged GET) | Implemented | `freedm/engine.py` → `_probe` |
+| A7 | Filename from `Content-Disposition` or URL path | Implemented | `freedm/engine.py` → `_filename_from_headers`, `_guess_filename` |
+| A8 | Filename sanitising for Windows | Implemented | `freedm/engine.py` → `sanitize_filename` |
+| A9 | Pause | Implemented | `freedm/engine.py` → `pause` |
+| A10 | Resume after pause | Implemented | `freedm/engine.py` → `resume` |
+| A11 | Cancel (deletes partial + state) | Implemented | `freedm/engine.py` → `cancel`, `_cleanup_partial` |
+| A12 | Resume after crash / reboot | Implemented | `freedm/engine.py` → `_save_state`, `_load_state` |
+| A13 | Retry per piece with exponential backoff (6 tries) | Implemented | `freedm/engine.py` → `_download_segment` |
+| A14 | Handle HTTP 416 (piece already complete) | Implemented | `freedm/engine.py` → `_download_segment` |
+| A15 | Detect a server ignoring `Range` on resume and abort safely | Implemented | `freedm/engine.py` → `_download_segment` |
+| A16 | Atomic finalize (`.part` → final file) | Implemented | `freedm/engine.py` → `_finalize` |
+| A17 | Speed limit (token bucket), settable live per download | Implemented (N1 adds live set) | `freedm/engine.py` → `RateLimiter`, `Download.set_speed_limit` |
+| A18 | Live speed / ETA / progress calculation | Implemented | `freedm/engine.py` → `_start_monitor`, `progress`, `eta` |
+| A19 | Thread-safe snapshot for UI | Implemented | `freedm/engine.py` → `snapshot` |
+| A20 | Unknown file size handled (streaming) | Implemented | `freedm/engine.py` → `_download_single` |
+| A21 | Custom request headers | Implemented (W2; GUI dialog + API) | `Download(headers=...)`, `freedm/gui.py` → `_edit_headers` |
+| A22 | Per-connection connect/read timeouts | Implemented | constants in `freedm/engine.py` |
+| A23 | Dynamic mid-download re-segmentation | Implemented (N4) | `freedm/engine.py` → `_claim_piece`, `_split_piece` |
 | A24 | Checksum verification | Planned | `ROADMAP.md` |
-| A25 | Resume integrity via `ETag`/`Last-Modified` + `If-Range` | Implemented (W5) | `engine.py` → `_probe`, `_validator_changed`, `_load_state` |
-| A26 | Auto-restart when the remote file changed | Implemented (W5) | `engine.py` → `FileChangedError`, `_reset_for_restart` |
-| A27 | Overwrite policy: rename / overwrite / cancel / callback | Implemented (W5) | `engine.py` → `_apply_existing_policy`, `_unique_path` |
-| A28 | Disk-space precheck before preallocation | Implemented (W5) | `engine.py` → `_check_disk_space` |
-| A29 | Auto-fallback when a server stops honouring `Range` | Implemented (W5) | `engine.py` → `RangeNotSupportedError`, `_run_once` |
-| A30 | Worker exceptions propagate to the download status | Implemented (W5) | `engine.py` → `_worker`, `_download_segmented` |
+| A25 | Resume integrity via `ETag`/`Last-Modified` + `If-Range` | Implemented (W5) | `freedm/engine.py` → `_probe`, `_validator_changed`, `_load_state` |
+| A26 | Auto-restart when the remote file changed | Implemented (W5) | `freedm/engine.py` → `FileChangedError`, `_reset_for_restart` |
+| A27 | Overwrite policy: rename / overwrite / cancel / callback | Implemented (W5) | `freedm/engine.py` → `_apply_existing_policy`, `_unique_path` |
+| A28 | Disk-space precheck before preallocation | Implemented (W5) | `freedm/engine.py` → `_check_disk_space` |
+| A29 | Auto-fallback when a server stops honouring `Range` | Implemented (W5) | `freedm/engine.py` → `RangeNotSupportedError`, `_run_once` |
+| A30 | Worker exceptions propagate to the download status | Implemented (W5) | `freedm/engine.py` → `_worker`, `_download_segmented` |
 | A31 | Per-download `requests.Session` + connection pooling | Implemented (W2) | `Download.__init__` (HTTPAdapter) |
-| A32 | Cookie jar: dict / `"a=1; b=2"` / extension list | Implemented (W2) | `engine.py` → `_apply_cookies` |
+| A32 | Cookie jar: dict / `"a=1; b=2"` / extension list | Implemented (W2) | `freedm/engine.py` → `_apply_cookies` |
 | A33 | Custom headers (Referer, Cookie, Authorization...) | Implemented (W2) | `headers=`, `_session_headers` |
 | A34 | Redirect-aware `final_url` reused for every request | Implemented (W2) | `_probe`, `_request_url` |
 | A35 | `Accept-Encoding: identity` so ranges address raw bytes | Implemented (W2) | `Download.__init__` |
 | A36 | Clear 401/403 error, never retried | Implemented (W2) | `AuthRequiredError` |
-| A37 | SQLite job queue (`%APPDATA%\FreeDM\freedm.db`) | Implemented (W3) | `store.py` → `JobStore` |
+| A37 | SQLite job queue (`%APPDATA%\FreeDM\freedm.db`) | Implemented (W3) | `freedm/store.py` → `JobStore` |
 | A38 | Status/size/filename/headers persisted on transitions | Implemented (W3) | `_store_save` |
 | A39 | Segment offsets mirrored to the DB during download | Implemented (W3) | `_save_state` → `_store_save` |
 | A40 | Resume from DB ranges if the JSON sidecar is missing | Implemented (W3) | `_load_db_segments` |
 | A41 | DB failures never abort or corrupt the payload | Implemented (W3) | `JobStore._write`, `_store_save` |
 | A42 | `abandon()` keeps partial data on app close | Implemented (W3) | `Download.abandon` |
 | A43 | Rate limiter handles caps below one chunk size | Implemented (W3 fix) | `RateLimiter.consume` |
-| A44 | Global active-download cap (default 3) | Implemented (W4) | `scheduler.py` → `Scheduler` |
+| A44 | Global active-download cap (default 3) | Implemented (W4) | `freedm/scheduler.py` → `Scheduler` |
 | A45 | Total connection cap (default 64) | Implemented (W4) | `Scheduler.pump` |
 | A46 | Per-host connection cap (default 12) | Implemented (W4) | `Scheduler.pump` (netloc budget) |
 | A47 | FIFO queue with Start Now / Move Up / Move Down | Implemented (W4) | `Scheduler` queue methods |
 | A48 | `429`/`503` honours `Retry-After` or backoff | Implemented (W4) | `Download._parse_retry_after` |
 | A49 | Queued status persists across restarts | Implemented (W4) | `QUEUED`, `mark_queued` |
-| A50 | Loopback control server (`127.0.0.1:6801`) | Implemented (W1) | `control_server.py` → `ControlServer` |
+| A50 | Loopback control server (`127.0.0.1:6801`) | Implemented (W1) | `freedm/control_server.py` → `ControlServer` |
 | A51 | Token authentication for `/add` (403 otherwise) | Implemented (W1) | `ControlServer` handler |
 | A52 | `GET /ping` for app detection | Implemented (W1) | `ControlServer` handler |
 | A53 | Accepts cookies/referer/UA/filename from the browser | Implemented (W1) | `_normalise`, `_add_from_browser` |
 | A54 | Token file auto-created under `%APPDATA%\FreeDM` | Implemented (W1) | `load_or_create_token` |
 | A55 | Extension bundled in the exe and exportable | Implemented (W1) | `export_extension` |
-| A56 | Live per-download speed limit (`set_speed_limit`, 0 = off) | Implemented (N1) | `engine.py` → `Download.set_speed_limit`, `snapshot()["speed_limit"]` |
-| A57 | Per-job `speed_limit` persisted in the DB (auto-migrated) | Implemented (N1) | `store.py` → `_migrate`, `speed_limit` column; `Download.apply_record` |
-| A58 | Typed settings module shared by GUI/CLI/tests | Implemented (N1) | `settings.py` → `load`, `save`, `DEFAULTS` |
-| A59 | Batch URL parsing (multi-line/space, invalid + duplicates reported) | Implemented (N2) | `batch.py` → `parse_urls` |
-| A60 | Clipboard link extraction (bracket/punctuation aware, excludable) | Implemented (N2) | `batch.py` → `find_url` |
-| A61 | Size verification before finalize (short download ≠ done) | Implemented (N3) | `engine.py` → `_check_complete`, `VerificationError` |
-| A62 | Size + checksum verification of the finished file | Implemented (N3) | `engine.py` → `_verify_result`; `verify.py` → `verify_size`, `verify_checksum` |
-| A63 | Checksum parsing (sha256/sha512/sha1/md5, bare or `algo:hex`) | Implemented (N3) | `verify.py` → `parse_checksum` |
-| A64 | `Download(checksum=…)`, `set_checksum()`, `verify_now()` | Implemented (N3) | `engine.py` → `set_checksum`, `verify_now` |
-| A65 | Expected checksum + result persisted in the DB | Implemented (N3) | `store.py` → `checksum`, `checksum_result` columns |
-| A66 | Abandoned `.part`/`.part.state.json` cleanup (age-based, opt-in) | Implemented (N3) | `verify.py` → `find_orphans`, `cleanup_orphans` |
-| A67 | Control server drains the body before an error response | Implemented (N3 fix) | `control_server.py` → `_drain` |
-| A68 | Work-queue segmentation: workers take the largest pending piece | Implemented (N4) | `engine.py` → `_claim_piece`, `_prepare_pending` |
-| A69 | Dynamic splitting: a big pending piece is split and shared | Implemented (N4) | `engine.py` → `_split_piece`, `split_count` |
-| A70 | Adaptive piece size (1–8 MB) following the slowest connection | Implemented (N4) | `engine.py` → `_piece_target`, `_note_piece_speed` |
-| A71 | Global speed cap shared by all downloads | Implemented (N4) | `engine.py` → `GlobalRateLimiter`, `set_global_speed_limit` |
-| A72 | Resume refuses a piece layout that does not tile the file | Implemented (N4) | `engine.py` → `_pieces_are_valid` |
-| A73 | Master switch for the old fixed-segment behaviour | Implemented (N4) | `engine.py` → `DYNAMIC_SPLITTING` |
-| A74 | Categories with editable extension rules | Implemented (N5) | `categories.py` → `default_rules`, `parse_rules`, `classify` |
-| A75 | Auto-sort into category folders (uses the real file name) | Implemented (N5) | `engine.py` → `dest_resolver`; `gui.py` → `_dest_resolver` |
-| A76 | Live list filter by name / URL / host / status | Implemented (N5) | `categories.py` → `matches_filter`; `gui.py` → `_apply_filter` |
-| A77 | Queue export / import (JSON, or a plain list of URLs) | Implemented (N5) | `categories.py` → `export_queue`, `import_queue` |
-| A78 | Reveal the file in Explorer ("Show in Folder") | Implemented (N5) | `gui.py` → `show_in_folder` |
-| A79 | Scheduled start per job (persisted, survives a restart) | Implemented (N6) | `engine.py` → `set_start_at`, `SCHEDULED`; `scheduler.py` → `_promote_scheduled` |
-| A80 | Daily download window (may wrap past midnight) | Implemented (N6) | `automation.py` → `in_window`; `scheduler.py` → `set_window` |
-| A81 | Shut down / sleep when the queue drains (confirmation-guarded) | Implemented (N6) | `gui.py` → `_check_shutdown_when_done`; `automation.py` → `shutdown_command` |
-| A82 | Start Now overrides the schedule and the window | Implemented (N6) | `scheduler.py` → `start_now` |
+| A56 | Live per-download speed limit (`set_speed_limit`, 0 = off) | Implemented (N1) | `freedm/engine.py` → `Download.set_speed_limit`, `snapshot()["speed_limit"]` |
+| A57 | Per-job `speed_limit` persisted in the DB (auto-migrated) | Implemented (N1) | `freedm/store.py` → `_migrate`, `speed_limit` column; `Download.apply_record` |
+| A58 | Typed settings module shared by GUI/CLI/tests | Implemented (N1) | `freedm/settings.py` → `load`, `save`, `DEFAULTS` |
+| A59 | Batch URL parsing (multi-line/space, invalid + duplicates reported) | Implemented (N2) | `freedm/batch.py` → `parse_urls` |
+| A60 | Clipboard link extraction (bracket/punctuation aware, excludable) | Implemented (N2) | `freedm/batch.py` → `find_url` |
+| A61 | Size verification before finalize (short download ≠ done) | Implemented (N3) | `freedm/engine.py` → `_check_complete`, `VerificationError` |
+| A62 | Size + checksum verification of the finished file | Implemented (N3) | `freedm/engine.py` → `_verify_result`; `freedm/verify.py` → `verify_size`, `verify_checksum` |
+| A63 | Checksum parsing (sha256/sha512/sha1/md5, bare or `algo:hex`) | Implemented (N3) | `freedm/verify.py` → `parse_checksum` |
+| A64 | `Download(checksum=…)`, `set_checksum()`, `verify_now()` | Implemented (N3) | `freedm/engine.py` → `set_checksum`, `verify_now` |
+| A65 | Expected checksum + result persisted in the DB | Implemented (N3) | `freedm/store.py` → `checksum`, `checksum_result` columns |
+| A66 | Abandoned `.part`/`.part.state.json` cleanup (age-based, opt-in) | Implemented (N3) | `freedm/verify.py` → `find_orphans`, `cleanup_orphans` |
+| A67 | Control server drains the body before an error response | Implemented (N3 fix) | `freedm/control_server.py` → `_drain` |
+| A68 | Work-queue segmentation: workers take the largest pending piece | Implemented (N4) | `freedm/engine.py` → `_claim_piece`, `_prepare_pending` |
+| A69 | Dynamic splitting: a big pending piece is split and shared | Implemented (N4) | `freedm/engine.py` → `_split_piece`, `split_count` |
+| A70 | Adaptive piece size (1–8 MB) following the slowest connection | Implemented (N4) | `freedm/engine.py` → `_piece_target`, `_note_piece_speed` |
+| A71 | Global speed cap shared by all downloads | Implemented (N4) | `freedm/engine.py` → `GlobalRateLimiter`, `set_global_speed_limit` |
+| A72 | Resume refuses a piece layout that does not tile the file | Implemented (N4) | `freedm/engine.py` → `_pieces_are_valid` |
+| A73 | Master switch for the old fixed-segment behaviour | Implemented (N4) | `freedm/engine.py` → `DYNAMIC_SPLITTING` |
+| A74 | Categories with editable extension rules | Implemented (N5) | `freedm/categories.py` → `default_rules`, `parse_rules`, `classify` |
+| A75 | Auto-sort into category folders (uses the real file name) | Implemented (N5) | `freedm/engine.py` → `dest_resolver`; `freedm/gui.py` → `_dest_resolver` |
+| A76 | Live list filter by name / URL / host / status | Implemented (N5) | `freedm/categories.py` → `matches_filter`; `freedm/gui.py` → `_apply_filter` |
+| A77 | Queue export / import (JSON, or a plain list of URLs) | Implemented (N5) | `freedm/categories.py` → `export_queue`, `import_queue` |
+| A78 | Reveal the file in Explorer ("Show in Folder") | Implemented (N5) | `freedm/gui.py` → `show_in_folder` |
+| A79 | Scheduled start per job (persisted, survives a restart) | Implemented (N6) | `freedm/engine.py` → `set_start_at`, `SCHEDULED`; `freedm/scheduler.py` → `_promote_scheduled` |
+| A80 | Daily download window (may wrap past midnight) | Implemented (N6) | `freedm/automation.py` → `in_window`; `freedm/scheduler.py` → `set_window` |
+| A81 | Shut down / sleep when the queue drains (confirmation-guarded) | Implemented (N6) | `freedm/gui.py` → `_check_shutdown_when_done`; `freedm/automation.py` → `shutdown_command` |
+| A82 | Start Now overrides the schedule and the window | Implemented (N6) | `freedm/scheduler.py` → `start_now` |
 | A83 | Changelog-driven release notes per build | Implemented (N6) | `CHANGELOG.md`; `scripts/release_notes.py` |
-| A84 | HTTP/SOCKS proxy with credentials and a bypass list | Implemented (N7) | `network.py` → `ProxyConfig`; engine → `session.proxies` + `_proxies_for` |
-| A85 | IPv4/IPv6 address-family preference | Implemented (N7) | `network.py` → `install_address_preference` |
-| A86 | Mirror sources: the probe and the download fall back to them | Implemented (N7) | `network.py` → `mirror_path`; engine → `_source_url`, `_advance_source` |
-| A87 | Mirrors persisted per job | Implemented (N7) | `store.py` → `mirrors` column; `Download.set_mirrors` |
-| A88 | Network dialog with a connection check | Implemented (N7) | `gui.py` → `network_dialog`, `_check_connection` |
-| A89 | Control server refuses a non-loopback `Host` header | Implemented (security) | `control_server.py` → `_host_allowed` |
-| A90 | CORS is only granted to extension origins | Implemented (security) | `control_server.py` → `_origin_allowed` |
+| A84 | HTTP/SOCKS proxy with credentials and a bypass list | Implemented (N7) | `freedm/network.py` → `ProxyConfig`; engine → `session.proxies` + `_proxies_for` |
+| A85 | IPv4/IPv6 address-family preference | Implemented (N7) | `freedm/network.py` → `install_address_preference` |
+| A86 | Mirror sources: the probe and the download fall back to them | Implemented (N7) | `freedm/network.py` → `mirror_path`; engine → `_source_url`, `_advance_source` |
+| A87 | Mirrors persisted per job | Implemented (N7) | `freedm/store.py` → `mirrors` column; `Download.set_mirrors` |
+| A88 | Network dialog with a connection check | Implemented (N7) | `freedm/gui.py` → `network_dialog`, `_check_connection` |
+| A89 | Control server refuses a non-loopback `Host` header | Implemented (security) | `freedm/control_server.py` → `_host_allowed` |
+| A90 | CORS is only granted to extension origins | Implemented (security) | `freedm/control_server.py` → `_origin_allowed` |
 | A91 | The control token stays on the device (`storage.local`) | Implemented (security) | `extension\background.js`, `options.js` |
 | A92 | Only the permissions the extension uses are requested | Implemented (security) | `extension\manifest.json` |
-| A93 | A hand-written `Cookie:` header is scoped to its host | Implemented (security) | `engine.py` → `_apply_cookie_header` |
-| A94 | Executables and scripts ask before they are opened | Implemented (security) | `gui.py` → `EXECUTABLE_EXTENSIONS` |
+| A93 | A hand-written `Cookie:` header is scoped to its host | Implemented (security) | `freedm/engine.py` → `_apply_cookie_header` |
+| A94 | Executables and scripts ask before they are opened | Implemented (security) | `freedm/gui.py` → `EXECUTABLE_EXTENSIONS` |
 | A95 | Firefox build of the extension (same source, own manifest) | Implemented (N8) | `extension\manifest.firefox.json`; `export_extension(browser="firefox")` |
 | A96 | "Download with FreeDM" context menu (link/media/page) | Implemented (N8) | `extension\background.js` → `handleMenuClick` |
-| A97 | Native messaging host that can start the app | Implemented (N8) | `native_host.py`; `main.py --native-host` |
-| A98 | Register / remove the native host | Implemented (N8) | `native_host.py` → `install_host`, `uninstall_host` |
+| A97 | Native messaging host that can start the app | Implemented (N8) | `freedm/native_host.py`; `main.py --native-host` |
+| A98 | Register / remove the native host | Implemented (N8) | `freedm/native_host.py` → `install_host`, `uninstall_host` |
 
-### Segment sizing rules (`engine.py`)
+### Segment sizing rules (`freedm/engine.py`)
 - Files ≤ `MIN_SEGMENT_SIZE` (1 MB) are downloaded as a single stream.
 - Otherwise piece count = `min(threads*4, max(threads, size // 1MB))`.
 - Pieces are contiguous and non-overlapping; the last piece takes the remainder.
@@ -140,7 +140,7 @@ On success both the `.part` and the `.state.json` are removed.
 
 ---
 
-## B. GUI features (`gui.py`)
+## B. GUI features (`freedm/gui.py`)
 
 | # | Feature | Status |
 |---|---|---|
@@ -200,7 +200,7 @@ Default save folder: `%USERPROFILE%\Downloads`.
 
 ---
 
-## C. Command-line features (`main.py`)
+## C. Command-line features (`freedm/main.py`)
 
 | # | Feature | Status |
 |---|---|---|

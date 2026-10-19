@@ -17,9 +17,9 @@ _HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.dirname(_HERE))
 sys.path.insert(0, _HERE)
 
-import batch                              # noqa: E402
-from store import JobStore                # noqa: E402
-import settings as S                      # noqa: E402
+import freedm.batch as batch                              # noqa: E402
+from freedm.store import JobStore                # noqa: E402
+from freedm import settings as S                      # noqa: E402
 from gui_testcase import GuiTestCase      # noqa: E402
 
 
@@ -202,7 +202,7 @@ class GuiSurfaceTests(unittest.TestCase):
     """The clipboard/batch wiring exists on the App class (no window created)."""
 
     def test_app_exposes_batch_and_clipboard_api(self):
-        import gui
+        from freedm import gui
         for name in ("add_download", "_add_url", "_enqueue", "_new_download",
                      "_check_clipboard", "_toggle_clipboard", "_read_clipboard",
                      "_known_urls"):

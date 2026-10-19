@@ -121,7 +121,7 @@ See `FILE_MAP.md` for exactly which file implements each step.
 | `FreeDM.exe` (no args) | Launches the Tkinter GUI |
 | `FreeDM.exe URL -o DIR -t N` | Command-line download (no visible output in the windowed exe) |
 | `FreeDM.exe --selftest URL DIR` | Headless download; writes `DIR\selftest_result.txt` |
-| `python main.py ...` (from source) | Same as above, with live CLI progress |
+| `python -m freedm.main ...` (from source) | Same as above, with live CLI progress |
 
 ## 5. Design principles
 

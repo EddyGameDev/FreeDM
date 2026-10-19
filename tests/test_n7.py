@@ -19,11 +19,11 @@ _HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.dirname(_HERE))
 sys.path.insert(0, _HERE)
 
-import network                          # noqa: E402
+import freedm.network as network                          # noqa: E402
 import range_server                      # noqa: E402
-from engine import Download, DONE, ERROR  # noqa: E402
-from store import JobStore               # noqa: E402
-import settings as S                     # noqa: E402
+from freedm.engine import Download, DONE, ERROR  # noqa: E402
+from freedm.store import JobStore               # noqa: E402
+from freedm import settings as S                     # noqa: E402
 from gui_testcase import GuiTestCase      # noqa: E402
 
 
@@ -248,12 +248,12 @@ class GuiIntegrationTests(GuiTestCase):
         self.app._apply_network_settings()
         save_settings = self.app._apply_network_settings
         self.assertTrue(save_settings is not None)
-        from network import PROXY
+        from freedm.network import PROXY
         self.assertTrue(PROXY.enabled)
         self.assertTrue(PROXY.is_bypassed("http://localhost/x"))
-        from settings import load
+        from freedm.settings import load
         # the persisted values come from the dialog, so set them directly too
-        import settings as S
+        from freedm import settings as S
         S.save(self.store, proxy_url=self.app.proxy_url,
                proxy_bypass=self.app.proxy_bypass,
                prefer_ipv4=self.app.prefer_ipv4)
@@ -273,7 +273,7 @@ class GuiIntegrationTests(GuiTestCase):
         self.assertIn("OK", result)
 
     def test_gui_exposes_the_network_actions(self):
-        import gui
+        from freedm import gui
         for name in ("network_dialog", "mirrors_dialog", "_check_connection",
                      "_apply_network_settings"):
             self.assertTrue(hasattr(gui.App, name), name)

@@ -21,8 +21,8 @@ sys.path.insert(0, os.path.dirname(_HERE))
 sys.path.insert(0, _HERE)
 
 import range_server                      # noqa: E402
-import engine                            # noqa: E402
-from engine import (Download, Segment, DONE, ERROR,  # noqa: E402
+import freedm.engine as engine                            # noqa: E402
+from freedm.engine import (Download, Segment, DONE, ERROR,  # noqa: E402
                      set_global_speed_limit, global_speed_limit)
 from gui_testcase import GuiTestCase      # noqa: E402
 
@@ -376,7 +376,7 @@ class GuiIntegrationTests(GuiTestCase):
                                return_value="64"):
             self.app.global_limit_dialog()
         self.assertEqual(global_speed_limit(), 64 * 1024)
-        from settings import load
+        from freedm.settings import load
         self.assertEqual(load(self.store)["global_speed_limit"], 64 * 1024)
 
     def test_global_limit_can_be_cleared(self):
@@ -399,7 +399,7 @@ class GuiIntegrationTests(GuiTestCase):
         self.assertIn("Global cap:", text)
 
     def test_gui_exposes_the_global_limit_dialog(self):
-        import gui
+        from freedm import gui
         self.assertTrue(hasattr(gui.App, "global_limit_dialog"))
 
 

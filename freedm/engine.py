@@ -19,9 +19,9 @@ from urllib.parse import unquote, urlparse
 
 import requests
 
-from verify import (ALGORITHMS, parse_checksum, file_digest, verify_size,
+from freedm.verify import (ALGORITHMS, parse_checksum, file_digest, verify_size,
                     verify_checksum)
-from network import PROXY, mirror_path
+from freedm.network import PROXY, mirror_path
 
 # ---------------------------------------------------------------------------
 # Tunables

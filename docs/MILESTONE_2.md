@@ -14,6 +14,10 @@
 > GitHub** (see `docs/PUBLISHING.md` for what was checked). The repository was
 > re-created under the account `EddyGameDev` and the full local history
 > (`Plan\FreeDM\.git`) was pushed to it unchanged.
+>
+> **Repository layout:** the application is the `freedm/` package; the root
+> holds the extension, the tests, the docs, the release tooling and
+> `releases/` (the archived pre-security-fix builds). See `docs/FILE_MAP.md`.
 
 Milestone 1 (W1–W5) made FreeDM browsable, session-aware, persistent and
 polite. Milestone 2 turns it from "works" into "nicer to live with", then
@@ -25,14 +29,15 @@ without re-analysing the code.
 
 | Date | Goal | Result |
 |---|---|---|
-| 2026-10-19 | **N1 — Settings persistence & quick controls** | **DONE.** `settings.py`; last folder, threads, default speed limit and window geometry persist in the existing `settings` table; per-job `speed_limit` column (auto-migrated); live per-download **Limit...**; full-text **Details...** dialog; retry-from-UI confirmed. 13/13 tests. Rebuilt exe (17.5 MB) verified with frozen `--selftest` + `--browser-selftest`. |
-| 2026-10-19 | **N2 — Batch input & clipboard** | **DONE.** `batch.py` (`parse_urls`, `find_url`); the URL box now adds every pasted http(s) line as its own job, reports invalid lines and skips duplicates; opt-in **Watch clipboard** toggle (off by default, persisted) offers a copied link with a confirmation and never adds on its own. 27/27 tests (incl. 8 real-GUI tests). Rebuilt exe (17.5 MB) verified with frozen `--selftest` + `--browser-selftest`. |
-| 2026-10-19 | **N3 — Integrity & verification** | **DONE.** New `verify.py` (checksum parsing/hashing, size check, orphan scan/cleanup). Engine: `checksum=` option, `VerificationError`, size check before finalize, `verify_now()`/`set_checksum()`, `checksum`/`checksum_result` DB columns (auto-migrated). GUI: **Checksum...** dialog, **Clean Up...** for abandoned `.part` files, checksum shown in **Details...**. Also fixed a real control-server race (403 before reading the request body → WinError 10053) found by a flaky W1 test. 34/34 N3 tests, W1 14/14. |
+| 2026-10-19 | **N1 — Settings persistence & quick controls** | **DONE.** `freedm/settings.py`; last folder, threads, default speed limit and window geometry persist in the existing `settings` table; per-job `speed_limit` column (auto-migrated); live per-download **Limit...**; full-text **Details...** dialog; retry-from-UI confirmed. 13/13 tests. Rebuilt exe (17.5 MB) verified with frozen `--selftest` + `--browser-selftest`. |
+| 2026-10-19 | **N2 — Batch input & clipboard** | **DONE.** `freedm/batch.py` (`parse_urls`, `find_url`); the URL box now adds every pasted http(s) line as its own job, reports invalid lines and skips duplicates; opt-in **Watch clipboard** toggle (off by default, persisted) offers a copied link with a confirmation and never adds on its own. 27/27 tests (incl. 8 real-GUI tests). Rebuilt exe (17.5 MB) verified with frozen `--selftest` + `--browser-selftest`. |
+| 2026-10-19 | **N3 — Integrity & verification** | **DONE.** New `freedm/verify.py` (checksum parsing/hashing, size check, orphan scan/cleanup). Engine: `checksum=` option, `VerificationError`, size check before finalize, `verify_now()`/`set_checksum()`, `checksum`/`checksum_result` DB columns (auto-migrated). GUI: **Checksum...** dialog, **Clean Up...** for abandoned `.part` files, checksum shown in **Details...**. Also fixed a real control-server race (403 before reading the request body → WinError 10053) found by a flaky W1 test. 34/34 N3 tests, W1 14/14. |
 | 2026-10-19 | **N4 — Dynamic segmentation** | **DONE.** Work-queue engine: workers take the largest pending piece and split it, so a slow connection can only hold back a small piece. Adaptive piece sizing follows the *slowest* recent connection (1 MB – 8 MB). New **Global Limit...** caps the combined throughput of all downloads. Resume now validates that the stored pieces tile the file exactly. `engine.DYNAMIC_SPLITTING` is the master switch. 24/24 tests. Rebuilt exe verified (frozen `--selftest` PASS). |
-| 2026-10-19 | **N5 — Organization & history** | **DONE.** New `categories.py` (categories, rules parser, filter, queue export/import). GUI: search box + status filter that hides non-matching rows live, **Sort into category folders** toggle with an editable **Categories...** dialog, **Export...**/**Import...** of the queue, **Show in Folder** (reveal in Explorer) and a friendlier **Open File** fallback. Engine: `dest_resolver` hook so the category folder is chosen from the *real* file name after the probe. 32/32 tests. Rebuilt exe verified (frozen `--selftest` PASS). |
-| 2026-10-19 | **N6 — Automation** | **DONE.** New `automation.py` (time/window helpers). Engine: `SCHEDULED` status + `start_at` (persisted, auto-migrated). Scheduler: holds jobs until their time, honours a daily window (may wrap past midnight), and "Start Now" overrides both. GUI: **Schedule...** dialog, a **Window** control in the filter bar, **Shut down when done** (confirmation-guarded). 36/36 tests. Also added `CHANGELOG.md` + `scripts/release_notes.py` so every build ships its own patch notes. |
-| 2026-10-19 | **N7 — Network options** | **DONE.** New `network.py`: shared proxy configuration (HTTP/SOCKS, credentials, bypass list), IPv4/IPv6 address preference, mirror URL building. Engine: every request honours the proxy (bypassed hosts get a per-request override), mirrors are tried in turn by the probe and the segment download, and the `mirrors` column is persisted (auto-migrated). GUI: **Network...** dialog with a **Test connection** button, and **Mirrors...** for alternative sources. 30/30 tests. |
+| 2026-10-19 | **N5 — Organization & history** | **DONE.** New `freedm/categories.py` (categories, rules parser, filter, queue export/import). GUI: search box + status filter that hides non-matching rows live, **Sort into category folders** toggle with an editable **Categories...** dialog, **Export...**/**Import...** of the queue, **Show in Folder** (reveal in Explorer) and a friendlier **Open File** fallback. Engine: `dest_resolver` hook so the category folder is chosen from the *real* file name after the probe. 32/32 tests. Rebuilt exe verified (frozen `--selftest` PASS). |
+| 2026-10-19 | **N6 — Automation** | **DONE.** New `freedm/automation.py` (time/window helpers). Engine: `SCHEDULED` status + `start_at` (persisted, auto-migrated). Scheduler: holds jobs until their time, honours a daily window (may wrap past midnight), and "Start Now" overrides both. GUI: **Schedule...** dialog, a **Window** control in the filter bar, **Shut down when done** (confirmation-guarded). 36/36 tests. Also added `CHANGELOG.md` + `scripts/release_notes.py` so every build ships its own patch notes. |
+| 2026-10-19 | **N7 — Network options** | **DONE.** New `freedm/network.py`: shared proxy configuration (HTTP/SOCKS, credentials, bypass list), IPv4/IPv6 address preference, mirror URL building. Engine: every request honours the proxy (bypassed hosts get a per-request override), mirrors are tried in turn by the probe and the segment download, and the `mirrors` column is persisted (auto-migrated). GUI: **Network...** dialog with a **Test connection** button, and **Mirrors...** for alternative sources. 30/30 tests. |
 | 2026-10-19 | **N8 — Browser extras** | **DONE.** Firefox build of the extension (event page + gecko id, exported from the same source), a right-click **Download with FreeDM** context menu for links/media/pages, and a native messaging host (`--native-host`) so the extension can start FreeDM when it is closed. 32/32 tests. |
+| 2026-10-19 | **Repository reorganisation** | **DONE.** The application moved into the `freedm/` package (imported as `freedm.<module>`); the root now holds only the extension, tests, docs, release tooling and `releases/`. The builds published before the security fixes (v1.0.0, v1.1.0, v1.2.0) are archived in `releases/` with their hashes and a "superseded" notice. All 15 suites pass, the frozen build was rebuilt and verified. |
 | next | N9 — Packaging & quality | Not started |
 | later | N10 — Streaming media | Deferred (large, separate subsystem) |
 
@@ -65,7 +70,7 @@ there was no way to throttle a single download, errors were cut to 40 chars, and
 retrying a failed job was unclear.
 
 **What shipped:**
-- New `settings.py`: typed accessors over the existing SQLite `settings` table
+- New `freedm/settings.py`: typed accessors over the existing SQLite `settings` table
   (`load`/`save`/`get_str|get_int|get_float|get_bool`), safe when there is no
   store, with a single `DEFAULTS` definition shared by GUI, CLI and tests.
 - Persisted: `last_dir`, `threads`, `speed_limit`, `window` (geometry), plus the
@@ -102,7 +107,7 @@ transferred mid-flight then finishes byte-correct when lifted).
 app to offer it.
 
 **What shipped:**
-- New `batch.py` (headless): `parse_urls(text) -> (valid, invalid, duplicates)`
+- New `freedm/batch.py` (headless): `parse_urls(text) -> (valid, invalid, duplicates)`
   and `find_url(text, exclude=...)`. Splitting accepts newlines *or* spaces
   (so pasted multi-line text works even if a widget flattens it), unwraps
   `(url)`/`[url]`/`<url>` wrappers, trims sentence punctuation, and keeps
@@ -142,7 +147,7 @@ confirm/decline/only-once flow).
 should be caught, and users with published checksums want verification.
 
 **What shipped:**
-- New `verify.py` (headless): `parse_checksum` (`sha256:…`, `md5:…`, `sha1`,
+- New `freedm/verify.py` (headless): `parse_checksum` (`sha256:…`, `md5:…`, `sha1`,
   `sha512`, or a bare 64-hex digest), `file_digest` (streamed, constant
   memory), `verify_size`, `verify_checksum` (a mismatch message shows **both**
   digests), `find_orphans` and `cleanup_orphans`.
@@ -232,7 +237,7 @@ limit, throttled-server comparison, and 4 real-GUI tests).
 way to move a list of links in and out of the app.
 
 **What shipped:**
-- New `categories.py` (headless): the shipped categories (Video, Music,
+- New `freedm/categories.py` (headless): the shipped categories (Video, Music,
   Documents, Archives, Programs, Other), an editable rule format
   (`Name: .ext, .ext`) with a parser that reports bad lines, `classify()`,
   `destination_for()`, the list filter and the queue export/import helpers.
@@ -276,7 +281,7 @@ big file that should wait for a cheap night-time window cannot do that on its
 own.
 
 **What shipped:**
-- New `automation.py` (headless): `parse_time`/`format_time` (`"02:30"`),
+- New `freedm/automation.py` (headless): `parse_time`/`format_time` (`"02:30"`),
   `in_window` (the window may wrap past midnight), `seconds_until_minutes`,
   `seconds_until_epoch`, `next_window_opens` and `shutdown_command`.
 - **Scheduled start** per job: the new **Schedule...** button picks a date and
@@ -320,7 +325,7 @@ version's section so the GitHub release page always matches the code.
 and a file that is slow on one server is often fast on a mirror.
 
 **What shipped:**
-- New `network.py` (headless):
+- New `freedm/network.py` (headless):
   - `ProxyConfig` — one shared configuration for the whole app: proxy URL
     (HTTP or SOCKS), optional user name and password, and a bypass list.
     Credentials are embedded in the URL for `requests`; the summary shown in
@@ -399,7 +404,7 @@ a closed app meant the download stayed in the browser.
   source or the page URL, and hands it to FreeDM through the same `/add`
   endpoint as a normal download — with the cookies of that page, so a
   protected link still works.
-- **Native messaging host** (`P4.3`): a new `native_host.py` and a
+- **Native messaging host** (`P4.3`): a new `freedm/native_host.py` and a
   `FreeDM.exe --native-host` mode. The **Browser...** dialog can register the
   host with Chrome and Firefox (a manifest plus a per-user registry entry).
   When the extension finds no app running, it asks the browser to start the

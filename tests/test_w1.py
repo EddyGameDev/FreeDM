@@ -19,12 +19,12 @@ sys.path.insert(0, _HERE)
 
 import requests  # noqa: E402
 
-from control_server import (  # noqa: E402
+from freedm.control_server import (  # noqa: E402
     ControlServer,
     export_extension,
     load_or_create_token,
 )
-from engine import Download  # noqa: E402
+from freedm.engine import Download  # noqa: E402
 
 TOKEN = "test-token-1234567890"
 

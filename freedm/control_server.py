@@ -24,7 +24,7 @@ import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any, Callable
 
-from store import app_data_dir
+from freedm.store import app_data_dir
 
 CONTROL_PORT = 6801
 TOKEN_FILE = "control_token.txt"
@@ -89,7 +89,8 @@ def extension_source_dir() -> str:
     if getattr(sys, "frozen", False):
         base = getattr(sys, "_MEIPASS", os.path.dirname(sys.executable))
     else:
-        base = os.path.dirname(os.path.abspath(__file__))
+        # The package lives in freedm/; the extension sits next to it.
+        base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     return os.path.join(base, "extension")
 
 

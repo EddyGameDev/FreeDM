@@ -6,7 +6,7 @@ import sys
 import time
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from engine import Download  # noqa: E402
+from freedm.engine import Download  # noqa: E402
 
 out = sys.argv[1]
 url = sys.argv[2]

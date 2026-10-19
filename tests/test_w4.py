@@ -19,8 +19,8 @@ sys.path.insert(0, os.path.dirname(_HERE))
 sys.path.insert(0, _HERE)
 
 import range_server  # noqa: E402
-from engine import Download, DONE, ERROR, PAUSED, PROBING, DOWNLOADING, QUEUED  # noqa: E402
-from scheduler import Scheduler  # noqa: E402
+from freedm.engine import Download, DONE, ERROR, PAUSED, PROBING, DOWNLOADING, QUEUED  # noqa: E402
+from freedm.scheduler import Scheduler  # noqa: E402
 
 
 def sha256(path: str) -> str:

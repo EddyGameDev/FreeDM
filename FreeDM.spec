@@ -6,8 +6,8 @@ hiddenimports += collect_submodules('requests')
 
 
 a = Analysis(
-    ['main.py'],
-    pathex=[],
+    ['freedm/main.py'],
+    pathex=['.'],
     binaries=[],
     datas=[('extension', 'extension')],
     hiddenimports=hiddenimports,

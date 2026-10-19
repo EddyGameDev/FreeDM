@@ -10,7 +10,7 @@ the CLI and the tests all share one definition of the defaults and their types.
 
 Usage::
 
-    from settings import load, save
+    from freedm.settings import load, save
     prefs = load(store)            # dict[str, object], typed
     save(store, last_dir="D:/dl", threads=12)
 
