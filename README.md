@@ -61,6 +61,13 @@ bar limits downloads to certain hours of the day (e.g. `01:00` – `06:00`; it
 may run past midnight). **Shut down when done** powers the machine off once
 every job has finished — it always asks first.
 
+**Network...** configures a proxy (HTTP or SOCKS) with an optional user name
+and password, plus a bypass list for hosts that must be reached directly, and
+a **Test connection** button that checks the settings with a real request.
+**Mirrors...** sets alternative sources for a file: a mirror is a base URL and
+the original path is appended to it, so a slow server can be replaced by a
+fast one.
+
 **Limit...** sets a live speed cap (in KB/s; `0` or empty = unlimited) on the
 selected downloads and remembers it as the default for new downloads.
 **Global Limit...** caps the *combined* speed of every download — useful on a
@@ -180,6 +187,7 @@ FreeDM/
 ├── verify.py              # size/checksum verification + orphan cleanup
 ├── categories.py          # categories, list filter, queue export/import
 ├── automation.py          # scheduled starts, daily window, shut-down
+├── network.py             # proxy, IPv4/IPv6 preference, mirror sources
 ├── scheduler.py           # active/connection/host caps + FIFO queue
 ├── control_server.py      # loopback browser-handoff endpoint (token auth)
 ├── extension/             # MV3 browser extension (Chrome/Edge)
@@ -219,6 +227,7 @@ To get the notes for a release:
 python scripts\release_notes.py --list
 python scripts\release_notes.py v1.1.0
 python scripts\release_notes.py v1.1.0 --file notes.md
+python scripts\release_notes.py --hash dist\FreeDM.exe
 ```
 
 The same text is used for the GitHub release page, so the notes there always
@@ -248,6 +257,7 @@ python tests\test_n3.py
 python tests\test_n4.py
 python tests\test_n5.py
 python tests\test_n6.py
+python tests\test_n7.py
 python tests\test_changelog.py
 ```
 

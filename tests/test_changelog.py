@@ -102,6 +102,14 @@ class ChangelogTests(unittest.TestCase):
         self.assertEqual(
             release_notes.main(["--list", "--changelog", self.path]), 0)
 
+    def test_hash_helper(self):
+        import hashlib
+        target = os.path.join(self.tmp, "blob.bin")
+        with open(target, "wb") as fh:
+            fh.write(b"freedm" * 1000)
+        expected = hashlib.sha256(b"freedm" * 1000).hexdigest()
+        self.assertEqual(release_notes.sha256_of(target), expected)
+
 
 class ProjectChangelogTests(unittest.TestCase):
     """The project's own changelog must stay usable."""

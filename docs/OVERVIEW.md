@@ -52,6 +52,8 @@ crashes without losing progress.
   search box + status filter for the list, and queue export/import.
 - Automation: a scheduled start per job, a daily window in which downloads
   may start, and an optional shut-down when the queue drains.
+- Network options: an HTTP/SOCKS proxy with credentials and a bypass list,
+  an IPv4/IPv6 preference, and alternative sources ("mirrors") for a file.
 - A simple CLI and a headless `--selftest` mode.
 - A single-file distributable: `dist\FreeDM.exe`.
 
@@ -67,7 +69,8 @@ These are deliberately **not** implemented. Do not assume they exist:
 - No FTP or SFTP support (HTTP/HTTPS only).
 - No streaming-video (HLS/DASH) grabber.
 - No proxy authentication UI, and no automatic cookie import from browsers
-  (cookies/headers can be supplied manually or via the API).
+  (cookies/headers can be supplied manually or via the API). → **N7 added the
+  proxy UI** (host, port, user, password, bypass list).
 - No automatic checksum lookup — you paste the published digest yourself
   (N3 added the GUI **Checksum...** dialog and the verification itself).
 - No installer; it is a portable single `.exe`.

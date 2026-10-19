@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS downloads (
     checksum      TEXT    DEFAULT '',
     checksum_result TEXT  DEFAULT '',
     start_at      REAL    DEFAULT 0,
+    mirrors       TEXT    DEFAULT '[]',
     status        TEXT    DEFAULT 'idle',
     headers_json  TEXT    DEFAULT '{}',
     etag          TEXT,
@@ -132,6 +133,9 @@ class JobStore:
             if "start_at" not in cols:
                 self._conn.execute(
                     "ALTER TABLE downloads ADD COLUMN start_at REAL DEFAULT 0")
+            if "mirrors" not in cols:
+                self._conn.execute(
+                    "ALTER TABLE downloads ADD COLUMN mirrors TEXT DEFAULT '[]'")
         except sqlite3.Error as exc:       # pragma: no cover - rare
             self.last_error = str(exc)
 
@@ -164,9 +168,9 @@ class JobStore:
                     "INSERT INTO downloads"
                     " (url, final_url, dest_dir, filename, size, downloaded,"
                     "  threads, speed_limit, checksum, checksum_result, start_at,"
-                    "  status, headers_json, etag, last_modified, error,"
+                    "  mirrors, status, headers_json, etag, last_modified, error,"
                     "  created_at, updated_at)"
-                    " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                    " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                     (
                         dl.url, dl.final_url, dl.dest_dir, dl.filename,
                         int(dl.total_size or 0), int(dl.downloaded or 0),
@@ -174,6 +178,7 @@ class JobStore:
                         getattr(dl, "checksum", "") or "",
                         getattr(dl, "checksum_result", "") or "",
                         float(getattr(dl, "start_at", 0) or 0),
+                        json.dumps(list(getattr(dl, "mirrors", []) or [])),
                         dl.status,
                         json.dumps(dl.headers or {}),
                         dl.etag, dl.last_modified, dl.error, now, now,
@@ -193,8 +198,9 @@ class JobStore:
         return self._write(
             "UPDATE downloads SET final_url=?, dest_dir=?, filename=?,"
             " size=?, downloaded=?, threads=?, speed_limit=?, checksum=?,"
-            " checksum_result=?, start_at=?, status=?, headers_json=?, etag=?,"
-            " last_modified=?, error=?, updated_at=? WHERE id=?",
+            " checksum_result=?, start_at=?, mirrors=?, status=?,"
+            " headers_json=?, etag=?, last_modified=?, error=?, updated_at=?"
+            " WHERE id=?",
             (
                 dl.final_url, dl.dest_dir, dl.filename,
                 int(dl.total_size or 0), int(dl.downloaded or 0),
@@ -202,6 +208,7 @@ class JobStore:
                 getattr(dl, "checksum", "") or "",
                 getattr(dl, "checksum_result", "") or "",
                 float(getattr(dl, "start_at", 0) or 0),
+                json.dumps(list(getattr(dl, "mirrors", []) or [])),
                 dl.status,
                 json.dumps(dl.headers or {}),
                 dl.etag, dl.last_modified, dl.error, time.time(), job_id,

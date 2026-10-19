@@ -48,6 +48,7 @@ F:\OMNI Config\Plan\FreeDM\
 │   ├── test_n4.py              # N4 suite: dynamic pieces, global limit
 │   ├── test_n5.py              # N5 suite: categories, filter, export/import
 │   ├── test_n6.py              # N6 suite: scheduling, window, shut-down
+│   ├── test_n7.py              # N7 suite: proxy, address family, mirrors
 │   ├── test_changelog.py       # release-notes tooling
 │   ├── gui_testcase.py        # shared GUI test base (temp folder, no downloads)
 │   └── test_w1.py              # W1 suite: control server, token, payload
@@ -58,6 +59,7 @@ F:\OMNI Config\Plan\FreeDM\
 ├── batch.py                    # batch URL parsing + clipboard link detection (N2)
 ├── verify.py                   # size/checksum verification + orphan cleanup (N3)
 ├── categories.py               # categories, filtering, queue export/import (N5)
+├── network.py                  # proxy, address family, mirror URLs (N7)
 ├── control_server.py           # loopback browser-handoff endpoint (W1)
 ├── extension\                  # MV3 browser extension (W1)
 │   ├── manifest.json
@@ -260,6 +262,23 @@ a job may start, and how to power the machine down.
 | `describe_schedule(start_at)` | short human description of a job's start time |
 | `shutdown_command(mode, delay)` | the OS command for `shutdown` / `sleep`; `None` if unsupported |
 | `SHUTDOWN` / `SLEEP` | the two power modes |
+
+### `network.py` — proxy, address family, mirrors (N7)
+Headless helpers for the network options: how to reach the server, and where
+to get the file from when one source is slow or dead.
+
+| Symbol | Purpose |
+|---|---|
+| `ProxyConfig` | the shared proxy settings: URL, credentials, bypass list |
+| `ProxyConfig.configure(...)` / `enabled` / `summary()` | set the configuration; the summary never shows the password |
+| `ProxyConfig.proxies()` | the `requests` proxy mapping (credentials embedded) |
+| `ProxyConfig.proxies_for(url)` | the per-request override: `{"http": None, ...}` for a bypassed host, else `None` |
+| `ProxyConfig.is_bypassed(url)` | host / subdomain / `*.domain` / `*` matching |
+| `PROXY` | the one configuration the app uses |
+| `install_address_preference(prefer_ipv4)` | install (once) a resolver that puts the preferred family first |
+| `address_preference()` | the current preference |
+| `sorted_addresses(host, port, prefer_ipv4)` | the resolved addresses, preferred family first (diagnostics) |
+| `mirror_url(base, path)` / `mirror_path(base, url)` | the URL of a file on a mirror (the original path and query are kept) |
 
 ### `CHANGELOG.md` and `scripts/release_notes.py`
 `CHANGELOG.md` is the single source of truth for the patch notes of every

@@ -76,6 +76,16 @@ def notes(text: str, version: str, with_heading: bool = False) -> str | None:
     return body
 
 
+def sha256_of(path: str) -> str:
+    """The SHA-256 of a file, as a lowercase hex string."""
+    import hashlib
+    digest = hashlib.sha256()
+    with open(path, "rb") as fh:
+        for chunk in iter(lambda: fh.read(1 << 20), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("version", nargs="?",
@@ -85,9 +95,15 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--list", action="store_true",
                         help="list the versions in the changelog")
     parser.add_argument("--file", help="write the notes to this file")
+    parser.add_argument("--hash", metavar="FILE",
+                        help="print the SHA-256 of FILE and exit")
     parser.add_argument("--changelog", default=CHANGELOG,
                         help="path to CHANGELOG.md")
     args = parser.parse_args(argv)
+
+    if args.hash:
+        print(sha256_of(args.hash))
+        return 0
 
     try:
         text = read_changelog(args.changelog)

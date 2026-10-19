@@ -52,6 +52,12 @@ DEFAULTS: dict[str, str] = {
     "window_end": "",           # daily window end, "HH:MM"
     "shutdown_when_done": "0",  # power off when the queue drains
     "shutdown_mode": "shutdown",  # "shutdown" | "sleep"
+    # N7 additions
+    "proxy_url": "",            # e.g. http://127.0.0.1:8080
+    "proxy_user": "",           # optional proxy user name
+    "proxy_pass": "",           # optional proxy password (plain text!)
+    "proxy_bypass": "",         # comma separated hosts that skip the proxy
+    "prefer_ipv4": "1",         # prefer IPv4 when a host has both
 }
 
 #: Keys whose value is an integer.
@@ -59,7 +65,7 @@ _INT_KEYS = frozenset({"max_active", "max_connections", "max_per_host", "threads
                        "cleanup_days"})
 #: Keys whose value is a boolean ("1"/"0").
 _BOOL_KEYS = frozenset({"auto_resume", "control_enabled", "clipboard_monitor",
-                        "auto_sort", "shutdown_when_done"})
+                        "auto_sort", "shutdown_when_done", "prefer_ipv4"})
 #: Keys whose value is a float.
 _FLOAT_KEYS = frozenset({"speed_limit", "global_speed_limit"})
 

@@ -18,6 +18,7 @@ Use it like this::
 """
 from __future__ import annotations
 
+import gc
 import os
 import shutil
 import sys
@@ -64,10 +65,24 @@ class GuiTestCase(unittest.TestCase):
                 pass
 
     def _stop_scheduler(self) -> None:
+        # Stop the refresh timer first, so Tk does not fire a pending
+        # callback while the window is being destroyed.
+        handle = getattr(self.app, "_poll_handle", None)
+        if handle:
+            try:
+                self.root.after_cancel(handle)
+            except Exception:       # noqa: BLE001
+                pass
         self.app.scheduler.shutdown()
 
     def _destroy_root(self) -> None:
         self.root.destroy()
+        # Release the app (and its Tk variables) here, on the main thread.
+        # A Tk Variable's finaliser calls into Tcl, which is not allowed
+        # from a worker thread - and the objects would otherwise be freed
+        # later, by whichever thread happened to collect them.
+        self.app = None
+        gc.collect()
 
     def _close_store(self) -> None:
         self.store.close()

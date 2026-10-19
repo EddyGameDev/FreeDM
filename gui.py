@@ -37,6 +37,7 @@ from automation import (parse_time, format_time, in_window, describe_schedule,
 from categories import (default_rules, format_rules, load_rules, parse_rules,
                         classify, destination_for, matches_filter,
                         export_queue, import_queue, STATUS_FILTERS)
+from network import PROXY, install_address_preference, address_preference
 from verify import (ALGORITHMS, parse_checksum, find_orphans, cleanup_orphans)
 from scheduler import Scheduler
 from control_server import ControlServer, export_extension, token_path
@@ -86,7 +87,15 @@ class App:
         self.shutdown_when_done = bool(self.prefs.get("shutdown_when_done"))
         self.shutdown_mode = (self.prefs.get("shutdown_mode") or SHUTDOWN)
         self._shutdown_armed = False         # asked the user already?
+        self._poll_handle: str | None = None
         self.shutdown_var = tk.BooleanVar(value=self.shutdown_when_done)
+        # N7: proxy configuration and address-family preference.
+        self.proxy_url = (self.prefs.get("proxy_url") or "").strip()
+        self.proxy_user = (self.prefs.get("proxy_user") or "").strip()
+        self.proxy_pass = self.prefs.get("proxy_pass") or ""
+        self.proxy_bypass = (self.prefs.get("proxy_bypass") or "").strip()
+        self.prefer_ipv4 = bool(self.prefs.get("prefer_ipv4", True))
+        self._apply_network_settings()
         self.scheduler = Scheduler(
             int(self.prefs["max_active"]),
             int(self.prefs["max_connections"]),
@@ -208,6 +217,8 @@ class App:
         ttk.Checkbutton(bar, text="Shut down when done",
                         variable=self.shutdown_var,
                         command=self._toggle_shutdown).pack(side="left", padx=(10, 0))
+        ttk.Button(bar, text="Network...", command=self.network_dialog
+                   ).pack(side="left", padx=(10, 0))
 
     # -- N5: filtering, categories, import/export ---------------------------
     def _status_filter(self) -> str:
@@ -537,6 +548,152 @@ class App:
         except OSError as exc:
             messagebox.showerror(APP_NAME, f"Could not {verb}: {exc}")
 
+    # -- N7: network options ------------------------------------------------
+    def _apply_network_settings(self) -> None:
+        """Push the proxy / address settings into the shared configuration."""
+        PROXY.configure(self.proxy_url, self.proxy_user, self.proxy_pass,
+                        self.proxy_bypass)
+        install_address_preference(self.prefer_ipv4)
+
+    def network_dialog(self) -> None:
+        """Proxy settings, address-family preference and a connection check."""
+        win = tk.Toplevel(self.root)
+        win.title("Network options")
+        win.geometry("560x420")
+        win.transient(self.root)
+        pad = {"padx": 12, "pady": 6}
+
+        ttk.Label(
+            win,
+            text=("Route every download through a proxy (HTTP or SOCKS).\n"
+                  "Leave the address empty to connect directly."),
+            justify="left",
+        ).pack(anchor="w", **pad)
+
+        grid = ttk.Frame(win)
+        grid.pack(fill="x", padx=12)
+
+        url_var = tk.StringVar(value=self.proxy_url)
+        user_var = tk.StringVar(value=self.proxy_user)
+        pass_var = tk.StringVar(value=self.proxy_pass)
+        bypass_var = tk.StringVar(value=self.proxy_bypass)
+        ipv4_var = tk.BooleanVar(value=self.prefer_ipv4)
+
+        rows = (
+            ("Proxy:", url_var),
+            ("User:", user_var),
+            ("Password:", pass_var),
+            ("Bypass:", bypass_var),
+        )
+        for index, (label, var) in enumerate(rows):
+            ttk.Label(grid, text=label).grid(row=index, column=0, sticky="w",
+                                             pady=3)
+            entry = ttk.Entry(grid, textvariable=var, width=42)
+            if label == "Password:":
+                entry.configure(show="*")
+            entry.grid(row=index, column=1, sticky="ew", pady=3)
+        grid.columnconfigure(1, weight=1)
+
+        ttk.Label(
+            win,
+            text=("Bypass: comma separated hosts that must be reached "
+                  "directly (e.g. localhost, 127.0.0.1, *.internal)"),
+        ).pack(anchor="w", padx=12)
+        ttk.Checkbutton(
+            win, text="Prefer IPv4 when a host has both (a broken IPv6 route "
+                      "is a common cause of hangs)",
+            variable=ipv4_var).pack(anchor="w", padx=12, pady=(6, 0))
+
+        status = ttk.Label(win, text="", foreground="#a00")
+        status.pack(anchor="w", padx=12, pady=(4, 0))
+
+        btns = ttk.Frame(win, padding=(12, 6, 12, 12))
+        btns.pack(fill="x")
+
+        def save() -> None:
+            self.proxy_url = url_var.get().strip()
+            self.proxy_user = user_var.get().strip()
+            self.proxy_pass = pass_var.get()
+            self.proxy_bypass = bypass_var.get().strip()
+            self.prefer_ipv4 = ipv4_var.get()
+            self._apply_network_settings()
+            save_settings(self.store, proxy_url=self.proxy_url,
+                          proxy_user=self.proxy_user, proxy_pass=self.proxy_pass,
+                          proxy_bypass=self.proxy_bypass,
+                          prefer_ipv4=self.prefer_ipv4)
+            status.configure(text="Saved. " + PROXY.summary(), foreground="#080")
+            self._notify_status("Network settings saved")
+
+        def test() -> None:
+            self.proxy_url = url_var.get().strip()
+            self.proxy_user = user_var.get().strip()
+            self.proxy_pass = pass_var.get()
+            self.proxy_bypass = bypass_var.get().strip()
+            self._apply_network_settings()
+            result = self._check_connection()
+            status.configure(text=result, foreground="#a00" if "failed" in result
+                             else "#080")
+
+        ttk.Button(btns, text="Save", command=save).pack(side="right", padx=(4, 0))
+        ttk.Button(btns, text="Test connection", command=test).pack(side="right")
+        ttk.Button(btns, text="Close", command=win.destroy).pack(side="right")
+
+    def _check_connection(self) -> str:
+        """Make a small request through the current settings and report."""
+        import requests
+        url = "https://api.github.com/" if self.proxy_url else \
+            "https://www.gstatic.com/generate_204"
+        try:
+            response = requests.get(url, timeout=15, proxies=PROXY.proxies(),
+                                    headers={"User-Agent": "FreeDM/1.0"})
+        except Exception as exc:      # noqa: BLE001
+            return f"Connection failed: {exc}"
+        if response.status_code < 400:
+            return f"Connection OK (HTTP {response.status_code}) via {PROXY.summary()}"
+        return f"Connection failed: HTTP {response.status_code}"
+
+    def mirrors_dialog(self) -> None:
+        """Set alternative sources (mirror base URLs) for the selected job."""
+        selection = self._selected()
+        if not selection:
+            messagebox.showinfo(APP_NAME, "Select a download first.")
+            return
+        win = tk.Toplevel(self.root)
+        win.title("Mirrors")
+        win.geometry("560x360")
+        win.transient(self.root)
+
+        ttk.Label(
+            win,
+            text=("Alternative sources for the same file, one per line.\n"
+                  "A mirror is a base URL; the path of the original file is\n"
+                  "appended to it, so https://mirror.example/files/x.zip\n"
+                  "is fetched from https://mirror.example/files/x.zip.\n"
+                  "The mirror must serve the identical file."),
+            justify="left",
+        ).pack(anchor="w", padx=12, pady=(8, 4))
+
+        text = tk.Text(win, height=8, wrap="none")
+        text.pack(fill="both", expand=True, padx=12)
+        existing = list(selection[0].mirrors or [])
+        if existing:
+            text.insert("1.0", "\n".join(existing))
+
+        btns = ttk.Frame(win, padding=(12, 6, 12, 12))
+        btns.pack(fill="x")
+
+        def apply() -> None:
+            lines = [line.strip() for line in text.get("1.0", "end").splitlines()
+                     if line.strip()]
+            for dl in selection:
+                dl.set_mirrors(lines)
+            win.destroy()
+            self.status_var.set(
+                f"{len(lines)} mirror(s) set for {len(selection)} job(s)")
+
+        ttk.Button(btns, text="Save", command=apply).pack(side="right", padx=(4, 0))
+        ttk.Button(btns, text="Cancel", command=win.destroy).pack(side="right")
+
     def _build_tree(self) -> None:
         frame = ttk.Frame(self.root, padding=(8, 4))
         frame.pack(fill="both", expand=True)
@@ -570,6 +727,7 @@ class App:
             ("Cancel", self.cancel_selected),
             ("Start Now", self.start_now_selected),
             ("Schedule...", self.schedule_dialog),
+            ("Mirrors...", self.mirrors_dialog),
             ("Limit...", self.limit_selected),
             ("Global Limit...", self.global_limit_dialog),
             ("Checksum...", self.checksum_dialog),
@@ -1279,6 +1437,10 @@ class App:
     # -- refresh loop ------------------------------------------------------
     def _on_close(self) -> None:
         """Preserve partial data for running jobs before the app exits."""
+        try:
+            self.root.after_cancel(self._poll_handle)
+        except Exception:       # noqa: BLE001 - the timer may be gone
+            pass
         self.scheduler.shutdown()
         if self.control is not None:
             self.control.stop()
@@ -1356,7 +1518,7 @@ class App:
                 parts.append(f"{queued} queued")
             self.status_var.set(
                 " - ".join(parts) + f" - {human_speed(total_speed)} total")
-        self.root.after(500, self._poll)
+        self._poll_handle = self.root.after(500, self._poll)
 
 
 def run_gui() -> None:

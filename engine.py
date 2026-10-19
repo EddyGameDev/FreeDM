@@ -21,6 +21,7 @@ import requests
 
 from verify import (ALGORITHMS, parse_checksum, file_digest, verify_size,
                     verify_checksum)
+from network import PROXY, mirror_path
 
 # ---------------------------------------------------------------------------
 # Tunables
@@ -256,7 +257,7 @@ class Download:
                  verify_ssl: bool = True, on_existing: str = "rename",
                  confirm_overwrite=None, cookies=None,
                  store=None, job_id: int | None = None, checksum: str = "",
-                 dest_resolver=None):
+                 dest_resolver=None, mirrors=None):
         """on_existing: 'rename' (safe default) | 'overwrite' | 'cancel'.
         confirm_overwrite: optional callable(path) -> action, called when the
         destination already exists; overrides on_existing.
@@ -268,7 +269,8 @@ class Download:
         checksum: expected digest, e.g. "sha256:ab12..." or a bare 64-hex
         sha256 digest. Verified when the download finishes (N3).
         dest_resolver: optional callable(filename) -> folder, called once the
-        real file name is known (N5 category sorting)."""
+        real file name is known (N5 category sorting).
+        mirrors: optional list of alternative source base URLs (N7)."""
         self.url = url.strip()
         self.num_threads = max(1, min(int(num_threads), 32))
         self.headers = dict(headers or {})
@@ -292,12 +294,20 @@ class Download:
             pool_connections=16, pool_maxsize=64, max_retries=0)
         self.session.mount("http://", adapter)
         self.session.mount("https://", adapter)
+        # N7: the shared proxy configuration applies to every request.
+        self.session.proxies = PROXY.proxies()
         self._apply_cookies(cookies)
         self.final_url: str = self.url
+
+        # N7: alternative sources for the same file (mirror base URLs).
+        self.mirrors: list[str] = []
+        self._source_index = 0
 
         # W3: optional persistent queue backing.
         self.store = store
         self.job_id = job_id
+        if mirrors:
+            self.set_mirrors(list(mirrors))
         self.restored_status: str | None = None
         self._needs_prepare = False
         self._abandoned = False
@@ -557,6 +567,42 @@ class Download:
     def _session_headers(self) -> dict:
         return dict(self.headers)
 
+    # -- N7: proxy and mirrors ---------------------------------------------
+    def _proxies_for(self, url: str) -> dict | None:
+        """Per-request proxy override (``None`` = use the session's)."""
+        return PROXY.proxies_for(url)
+
+    def set_mirrors(self, mirrors: list[str] | None) -> None:
+        """Set the alternative sources for this job (mirror base URLs)."""
+        clean = []
+        for item in (mirrors or []):
+            text = str(item).strip()
+            if text and text not in clean:
+                clean.append(text)
+        self.mirrors = clean
+        self._source_index = 0
+        self._store_save()
+
+    @property
+    def _source_count(self) -> int:
+        return 1 + len(self.mirrors)
+
+    def _advance_source(self) -> bool:
+        """Move to the next mirror. True when there was one."""
+        if self._source_index + 1 >= self._source_count:
+            self._source_index = 0
+            return False
+        self._source_index += 1
+        return True
+
+    @property
+    def _source_url(self) -> str:
+        """The URL of the source currently in use."""
+        if self._source_index == 0:
+            return self.final_url or self.url
+        return mirror_path(self.mirrors[self._source_index - 1],
+                           self.final_url or self.url)
+
     @property
     def _request_url(self) -> str:
         """URL after redirects, so signed/CDN URLs are requested directly."""
@@ -671,6 +717,11 @@ class Download:
             self.start_at = float(record.get("start_at") or 0) or None
         except (TypeError, ValueError):
             self.start_at = None
+        try:
+            mirrors = json.loads(record.get("mirrors") or "[]")
+        except (TypeError, ValueError):
+            mirrors = []
+        self.mirrors = [str(m) for m in mirrors] if isinstance(mirrors, list) else []
         self.etag = record.get("etag") or self.etag
         self.last_modified = record.get("last_modified") or self.last_modified
         self.validator = self.etag or self.last_modified
@@ -708,68 +759,98 @@ class Download:
             r = self.session.head(self._request_url, headers=self._session_headers(),
                                   allow_redirects=True,
                                   timeout=(CONNECT_TIMEOUT, READ_TIMEOUT),
+                                  proxies=self._proxies_for(self._request_url),
                                   verify=self.verify_ssl)
             current = r.headers.get("ETag") or r.headers.get("Last-Modified")
         except Exception:       # noqa: BLE001
             return False
         return bool(current and current != self.validator)
 
+    def _source_base_url(self) -> str:
+        """The URL of the source currently selected (primary or a mirror)."""
+        if self._source_index == 0:
+            return self.url
+        return mirror_path(self.mirrors[self._source_index - 1], self.url)
+
     def _probe(self) -> None:
-        """Figure out total size, range support, filename and final URL."""
+        """Figure out total size, range support, filename and final URL.
+
+        N7: each source is tried in turn - the primary first, then the
+        mirrors - so a dead primary does not fail the whole download."""
         size = 0
         accept_ranges = False
         fname = None
         auth_status = None
+        final_url = self.final_url
 
-        # 1) HEAD request
-        try:
-            r = self.session.head(self.url, headers=self._session_headers(),
-                                  allow_redirects=True,
-                                  timeout=(CONNECT_TIMEOUT, READ_TIMEOUT),
-                                  verify=self.verify_ssl)
-            self.final_url = r.url or self.final_url
-            if r.status_code in (401, 403):
-                auth_status = r.status_code
-            elif r.status_code < 400:
-                size = int(r.headers.get("Content-Length", 0) or 0)
-                accept_ranges = r.headers.get("Accept-Ranges", "").lower() == "bytes"
-                fname = self._filename_from_headers(r.headers)
-                self.etag = r.headers.get("ETag") or self.etag
-                self.last_modified = r.headers.get("Last-Modified") or self.last_modified
-        except Exception:       # noqa: BLE001
-            pass
+        for index in range(self._source_count):
+            self._source_index = index
+            url = self._source_base_url()
+            size = 0
+            accept_ranges = False
+            fname = None
+            auth_status = None
+            found_url = self.final_url
 
-        # 2) Fall back to a tiny ranged GET if HEAD was not conclusive
-        if not accept_ranges or size == 0:
+            # 1) HEAD request
             try:
-                h = self._session_headers()
-                h["Range"] = "bytes=0-0"
-                r = self.session.get(self._request_url, headers=h, stream=True,
-                                     allow_redirects=True,
-                                     timeout=(CONNECT_TIMEOUT, READ_TIMEOUT),
-                                     verify=self.verify_ssl)
-                try:
-                    self.final_url = r.url or self.final_url
-                    if r.status_code in (401, 403):
-                        auth_status = r.status_code
+                r = self.session.head(url, headers=self._session_headers(),
+                                      allow_redirects=True,
+                                      timeout=(CONNECT_TIMEOUT, READ_TIMEOUT),
+                                      proxies=self._proxies_for(url),
+                                      verify=self.verify_ssl)
+                found_url = r.url or found_url
+                if r.status_code in (401, 403):
+                    auth_status = r.status_code
+                elif r.status_code < 400:
+                    size = int(r.headers.get("Content-Length", 0) or 0)
+                    accept_ranges = (r.headers.get("Accept-Ranges", "")
+                                     .lower() == "bytes")
+                    fname = self._filename_from_headers(r.headers)
                     self.etag = r.headers.get("ETag") or self.etag
-                    self.last_modified = r.headers.get("Last-Modified") or self.last_modified
-                    if r.status_code == 206:
-                        accept_ranges = True
-                        cr = r.headers.get("Content-Range", "")
-                        if "/" in cr:
-                            total = cr.rsplit("/", 1)[-1]
-                            if total.isdigit():
-                                size = int(total)
-                        fname = fname or self._filename_from_headers(r.headers)
-                    elif r.status_code == 200:
-                        size = int(r.headers.get("Content-Length", 0) or size)
-                        fname = fname or self._filename_from_headers(r.headers)
-                finally:
-                    r.close()
+                    self.last_modified = (r.headers.get("Last-Modified")
+                                          or self.last_modified)
             except Exception:       # noqa: BLE001
                 pass
 
+            # 2) Fall back to a tiny ranged GET if HEAD was not conclusive
+            if not accept_ranges or size == 0:
+                try:
+                    h = self._session_headers()
+                    h["Range"] = "bytes=0-0"
+                    r = self.session.get(self._source_url, headers=h,
+                                         stream=True, allow_redirects=True,
+                                         timeout=(CONNECT_TIMEOUT, READ_TIMEOUT),
+                                         proxies=self._proxies_for(self._source_url),
+                                         verify=self.verify_ssl)
+                    try:
+                        found_url = r.url or found_url
+                        if r.status_code in (401, 403):
+                            auth_status = r.status_code
+                        self.etag = r.headers.get("ETag") or self.etag
+                        self.last_modified = (r.headers.get("Last-Modified")
+                                              or self.last_modified)
+                        if r.status_code == 206:
+                            accept_ranges = True
+                            cr = r.headers.get("Content-Range", "")
+                            if "/" in cr:
+                                total = cr.rsplit("/", 1)[-1]
+                                if total.isdigit():
+                                    size = int(total)
+                            fname = fname or self._filename_from_headers(r.headers)
+                        elif r.status_code == 200:
+                            size = int(r.headers.get("Content-Length", 0) or size)
+                            fname = fname or self._filename_from_headers(r.headers)
+                    finally:
+                        r.close()
+                except Exception:       # noqa: BLE001
+                    pass
+
+            if size or accept_ranges or auth_status:
+                final_url = found_url
+                break
+
+        self.final_url = final_url
         if auth_status and size == 0:
             raise AuthRequiredError(
                 f"HTTP {auth_status}: the server requires cookies or headers "
@@ -1198,8 +1279,9 @@ class Download:
             if self.validator and self.downloaded > 0:
                 headers["If-Range"] = self.validator
             try:
-                with self.session.get(self._request_url, headers=headers, stream=True,
+                with self.session.get(self._source_url, headers=headers, stream=True,
                                       timeout=(CONNECT_TIMEOUT, READ_TIMEOUT),
+                                      proxies=self._proxies_for(self._source_url),
                                       verify=self.verify_ssl, allow_redirects=True) as r:
                     if r.status_code in (401, 403):
                         raise AuthRequiredError(
@@ -1249,6 +1331,15 @@ class Download:
                 attempt = 0
             except (FileChangedError, RangeNotSupportedError, AuthRequiredError):
                 raise
+            except (requests.exceptions.ConnectionError,
+                    requests.exceptions.Timeout) as exc:
+                # N7: the source is unreachable - try a mirror before giving up.
+                if self._advance_source():
+                    continue
+                attempt += 1
+                if attempt > MAX_RETRIES:
+                    raise IOError(f"segment {seg.index} failed: {exc}") from exc
+                time.sleep(min(2 ** attempt * 0.5, 10))
             except Exception as exc:      # noqa: BLE001
                 attempt += 1
                 if attempt > MAX_RETRIES:
@@ -1273,8 +1364,9 @@ class Download:
             else:
                 self.downloaded = 0
             try:
-                with self.session.get(self._request_url, headers=headers, stream=True,
+                with self.session.get(self._source_url, headers=headers, stream=True,
                                       timeout=(CONNECT_TIMEOUT, READ_TIMEOUT),
+                                      proxies=self._proxies_for(self._source_url),
                                       verify=self.verify_ssl, allow_redirects=True) as r:
                     if r.status_code in (401, 403):
                         raise AuthRequiredError(

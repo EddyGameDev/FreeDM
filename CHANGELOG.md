@@ -89,6 +89,46 @@ First public build.
 - The windowed build has no console, so CLI progress is silent in the
   packaged app.
 
+## [v1.2.0] - 2026-10-19
+
+Network options: proxy support, an IPv4/IPv6 preference and mirror sources.
+
+### Build
+
+- `FreeDM-1.2.0.exe` - Windows x64, single file, no installer (17.5 MB).
+- SHA-256: `b03f15c8d9c0f2b2092ce56b69506540b9dc7f659a3565e5d9446a2573cb99b5`
+- Verify with: `certutil -hashfile FreeDM-1.2.0.exe SHA256`
+- Source: <https://github.com/EddyGameDev/FreeDM>
+
+### Added
+
+- **Proxy support** - an HTTP or SOCKS proxy with an optional user name and
+  password, applied to every request (probe, range requests, single-stream
+  fallback and the validator check). A **bypass list** sends chosen hosts
+  straight to the server while the rest of the queue still uses the proxy.
+- **Network... dialog** - configure the proxy, the bypass list and the
+  address-family preference, with a **Test connection** button that makes a
+  real request through the current settings and reports the result.
+- **IPv4/IPv6 preference** - when a host resolves to both, the preferred
+  family is used first. A half-working IPv6 route is a common cause of
+  downloads that hang before falling back.
+- **Mirror sources** - a job can have alternative sources. The probe tries
+  them in turn and a segment whose source refuses the connection moves to the
+  next mirror, so a slow or dead server no longer fails the download. The
+  mirrors are stored with the job and restored on the next launch.
+
+### Changed
+
+- The queue database gained a `mirrors` column (existing databases are
+  migrated automatically).
+
+### Known limitations
+
+- The proxy password is stored in plain text in the queue database, like the
+  rest of the settings. Do not use it on a shared Windows account.
+- A mirror must serve the **identical** file; FreeDM does not compare the
+  bytes of two sources.
+
 ## [v1.1.0] - 2026-10-19
 
 Automation: scheduled starts, a daily download window and shut-down when the

@@ -1,6 +1,6 @@
 # FreeDM — Milestone 2: Everyday polish → engine strength
 
-**Status:** started 2026-10-19 · **N1–N6 done** · next: **N7** · Companion to
+**Status:** started 2026-10-19 · **N1–N7 done** · next: **N8** · Companion to
 [`NEXT_GOAL.md`](NEXT_GOAL.md) (Milestone 1 — **complete**) and
 [`ROADMAP.md`](ROADMAP.md) (full backlog).
 
@@ -31,7 +31,7 @@ without re-analysing the code.
 | 2026-10-19 | **N4 — Dynamic segmentation** | **DONE.** Work-queue engine: workers take the largest pending piece and split it, so a slow connection can only hold back a small piece. Adaptive piece sizing follows the *slowest* recent connection (1 MB – 8 MB). New **Global Limit...** caps the combined throughput of all downloads. Resume now validates that the stored pieces tile the file exactly. `engine.DYNAMIC_SPLITTING` is the master switch. 24/24 tests. Rebuilt exe verified (frozen `--selftest` PASS). |
 | 2026-10-19 | **N5 — Organization & history** | **DONE.** New `categories.py` (categories, rules parser, filter, queue export/import). GUI: search box + status filter that hides non-matching rows live, **Sort into category folders** toggle with an editable **Categories...** dialog, **Export...**/**Import...** of the queue, **Show in Folder** (reveal in Explorer) and a friendlier **Open File** fallback. Engine: `dest_resolver` hook so the category folder is chosen from the *real* file name after the probe. 32/32 tests. Rebuilt exe verified (frozen `--selftest` PASS). |
 | 2026-10-19 | **N6 — Automation** | **DONE.** New `automation.py` (time/window helpers). Engine: `SCHEDULED` status + `start_at` (persisted, auto-migrated). Scheduler: holds jobs until their time, honours a daily window (may wrap past midnight), and "Start Now" overrides both. GUI: **Schedule...** dialog, a **Window** control in the filter bar, **Shut down when done** (confirmation-guarded). 36/36 tests. Also added `CHANGELOG.md` + `scripts/release_notes.py` so every build ships its own patch notes. |
-| next | N7 — Network options | Not started |
+| 2026-10-19 | **N7 — Network options** | **DONE.** New `network.py`: shared proxy configuration (HTTP/SOCKS, credentials, bypass list), IPv4/IPv6 address preference, mirror URL building. Engine: every request honours the proxy (bypassed hosts get a per-request override), mirrors are tried in turn by the probe and the segment download, and the `mirrors` column is persisted (auto-migrated). GUI: **Network...** dialog with a **Test connection** button, and **Mirrors...** for alternative sources. 30/30 tests. |
 | next | N8 — Browser extras | Not started |
 | next | N9 — Packaging & quality | Not started |
 | later | N10 — Streaming media | Deferred (large, separate subsystem) |
@@ -48,7 +48,7 @@ without re-analysing the code.
 | N4 | Dynamic segmentation | P5.1, P5.2, debt #4 | M | **DONE** |
 | N5 | Organization & history | P1.2, P3.2, P3.3, P3.4 | M | **DONE** |
 | N6 | Automation | P2.1, P2.2, P2.3 | M | **DONE** |
-| N7 | Network options | P5.5, P5.8, P5.4 | M | Not started |
+| N7 | Network options | P5.5, P5.8, P5.4 | M | **DONE** |
 | N8 | Browser extras | P4.2, P4.5, P4.3 | M | Not started |
 | N9 | Packaging & quality | P0.6, P0.7, P0.8, P7.1, P7.4, P7.5, P7.6, P7.8 | M | Not started |
 | N10 | Streaming media | P6.1–P6.4 | L | Deferred |
@@ -314,15 +314,46 @@ version's section so the GitHub release page always matches the code.
 
 ---
 
-## N7 — Network options
+## N7 — Network options ✅ DONE
 
-**Build:** proxy configuration with auth (HTTP/SOCKS, `P5.5`), IPv6/Happy
-Eyeballs robustness (`P5.8`), and mirror/multi-source downloads (`P5.4`).
+**Why:** some networks only work through a proxy, some hosts break on IPv6,
+and a file that is slow on one server is often fast on a mirror.
 
-**Acceptance criteria:**
-- All requests honour the configured proxy.
-- A mirror that returns the same bytes can supply pieces for one job.
-- Settings persist and are testable with a connection check.
+**What shipped:**
+- New `network.py` (headless):
+  - `ProxyConfig` — one shared configuration for the whole app: proxy URL
+    (HTTP or SOCKS), optional user name and password, and a bypass list.
+    Credentials are embedded in the URL for `requests`; the summary shown in
+    the UI never contains the password.
+  - `install_address_preference` — prefers IPv4 (or IPv6) when a host resolves
+    to both. A half-working IPv6 route is a classic cause of downloads that
+    hang for minutes before falling back.
+  - `mirror_url` / `mirror_path` — builds the URL of a file on a mirror: a
+    mirror is a *base* URL and the original path (and query string, for signed
+    URLs) is appended to it.
+- **Proxy support**: every request — the probe, the range requests, the
+  single-stream fallback and the validator check — goes through the configured
+  proxy. A bypassed host gets a per-request override, so it is reached
+  directly while the rest of the queue still uses the proxy.
+- **Mirrors**: a job can have alternative sources. The probe tries them in
+  turn, and a segment whose source refuses the connection moves to the next
+  mirror instead of failing. The mirrors are stored in the database
+  (`mirrors` column) and restored with the job.
+- GUI: a **Network...** dialog (proxy, credentials, bypass list, IPv4
+  preference) with a **Test connection** button that makes a real request
+  through the current settings and reports the result, and a **Mirrors...**
+  dialog for the selected job.
+
+**Acceptance criteria:** all met.
+- All requests honour the configured proxy. ✅
+- A mirror that returns the same bytes can supply pieces for one job. ✅
+  (a dead primary falls back to the mirror and the file still completes)
+- Settings persist and are testable with a connection check. ✅
+
+**Tests:** `tests/test_n7.py` — 30/30 pass (proxy building, credentials,
+bypass rules including wildcards and subdomains, the address preference, the
+mirror URL rules, a dead primary falling back to a mirror, mirror persistence
+and migration, the new settings, and 5 real-GUI tests).
 
 ---
 

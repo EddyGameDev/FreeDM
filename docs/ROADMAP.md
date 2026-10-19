@@ -11,15 +11,16 @@
 > segment recovery), W4 (active/connection/per-host caps, FIFO, Retry-After)
 > and W1 (loopback control server + MV3 browser handoff).
 >
-> Milestone 2 has started — **N1–N6 done**: N1 (P0.2–P0.5: settings
+> Milestone 2 has started — **N1–N7 done**: N1 (P0.2–P0.5: settings
 > persistence, live per-download speed limit, retry-from-UI, full error
 > details), N2 (P1.3/P1.5: batch multi-URL add, opt-in clipboard watch),
 > N3 (P5.3/P5.10 + debt #3: size and checksum verification, abandoned
 > `.part` cleanup), N4 (P5.1/P5.2 + debt #4: dynamic segmentation,
 > adaptive piece sizing, global speed cap), N5 (P1.2/P3.2–P3.4:
-> categories with auto-sort, list filtering, queue export/import) and N6
+> categories with auto-sort, list filtering, queue export/import), N6
 > (P2.1–P2.3: scheduled starts, a daily download window, shut-down when
-> the queue drains). See `MILESTONE_2.md` §Progress log.
+> the queue drains) and N7 (P5.4/P5.5/P5.8: proxy with a bypass list,
+> IPv4/IPv6 preference, mirror sources). See `MILESTONE_2.md` §Progress log.
 
 This roadmap is ordered by **user value ÷ effort**. Items are independent
 unless a dependency is noted. Nothing here is implemented yet unless marked.
@@ -101,11 +102,11 @@ Effort is rough developer time: **S** ≈ ≤1 day, **M** ≈ 2–4 days,
 | ~~P5.1~~ | ~~**Dynamic segmentation** (IDM-style)~~ | ~~M~~ | **DONE (N4).** Work queue: workers take the largest pending piece and split it, so a slow pipe holds back less. |
 | ~~P5.2~~ | ~~**Adaptive piece sizing**~~ | ~~S~~ | **DONE (N4).** Piece target (1–8 MB) follows the *slowest* recent connection. |
 | ~~P5.3~~ | ~~**Checksum verification** (SHA-256/MD5)~~ | ~~S~~ | **DONE (N3).** `verify.py`; `Download(checksum=…)`, GUI **Checksum...**, mismatch fails the job and shows both digests. |
-| P5.4 | **Mirror / multi-source downloads** | M | Same file from several URLs; merge pieces across sources. |
-| P5.5 | **Proxy support** (HTTP/SOCKS, auth) | M | `requests` supports `proxies=`; add UI. |
+| ~~P5.4~~ | ~~**Mirror / multi-source downloads**~~ | ~~M~~ | **DONE (N7).** Mirrors are tried in turn by the probe and the download; the file comes from whichever source answers. |
+| ~~P5.5~~ | ~~**Proxy support** (HTTP/SOCKS, auth)~~ | ~~M~~ | **DONE (N7).** Shared proxy configuration with credentials, a bypass list and a connection check in the GUI. |
 | P5.6 | **Cookie jar / login support** | M | Import from browser or manual. |
 | P5.7 | **FTP support** | L | Different protocol; `ftplib`, no Range semantics. |
-| P5.8 | **IPv6 / Happy Eyeballs tuning** | S | Connection robustness. |
+| ~~P5.8~~ | ~~**IPv6 / Happy Eyeballs tuning**~~ | ~~S~~ | **DONE (N7).** The resolver can prefer IPv4 or IPv6 when a host has both. |
 | P5.9 | **Bandwidth scheduler** (different limits by time) | M | Depends on `RateLimiter`. |
 | ~~P5.10~~ | ~~**Verify size after assembly**~~ | ~~S~~ | **DONE (N3).** `_check_complete` + `verify_size`; a short download is never reported as done. |
 
