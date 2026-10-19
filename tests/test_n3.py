@@ -1,3 +1,4 @@
+# Required Notice: Copyright (c) 2026 outlawproductionstwo-hash
 """Milestone 2 / goal N3 tests: size verification, checksum verification and
 orphan (.part) cleanup.
 

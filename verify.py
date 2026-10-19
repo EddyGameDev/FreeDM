@@ -1,3 +1,4 @@
+# Required Notice: Copyright (c) 2026 outlawproductionstwo-hash
 """File integrity verification and orphan cleanup (Milestone 2, goal N3).
 
 Deliberately headless - no Tkinter, no network - so the engine, the GUI and the

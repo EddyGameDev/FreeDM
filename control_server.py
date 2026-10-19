@@ -1,3 +1,4 @@
+# Required Notice: Copyright (c) 2026 outlawproductionstwo-hash
 """Local control server for browser handoff (W1).
 
 Listens only on 127.0.0.1 and accepts small JSON requests from the FreeDM

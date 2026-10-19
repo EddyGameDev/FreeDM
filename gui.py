@@ -1,3 +1,4 @@
+# Required Notice: Copyright (c) 2026 outlawproductionstwo-hash
 """FreeDM Tkinter GUI - a free Internet Download Manager style front-end."""
 from __future__ import annotations
 

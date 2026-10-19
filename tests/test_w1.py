@@ -1,3 +1,4 @@
+# Required Notice: Copyright (c) 2026 outlawproductionstwo-hash
 """W1 tests: local browser-handoff control server.
 
 Run with:  python tests/test_w1.py

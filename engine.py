@@ -1,3 +1,4 @@
+# Required Notice: Copyright (c) 2026 outlawproductionstwo-hash
 """FreeDM download engine.
 
 Multi-threaded, segmented HTTP/HTTPS downloads using HTTP Range requests,

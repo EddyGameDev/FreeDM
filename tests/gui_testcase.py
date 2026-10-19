@@ -1,3 +1,4 @@
+# Required Notice: Copyright (c) 2026 outlawproductionstwo-hash
 """Shared base class for the FreeDM GUI tests.
 
 A GUI test must never write into the user's real Downloads folder and must

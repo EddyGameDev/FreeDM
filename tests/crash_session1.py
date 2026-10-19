@@ -1,3 +1,4 @@
+# Required Notice: Copyright (c) 2026 outlawproductionstwo-hash
 """Test helper: start a download, pause, then abruptly exit the process
 (simulates a crash / force-close so OS releases file handles)."""
 import os

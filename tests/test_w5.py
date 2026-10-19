@@ -1,3 +1,4 @@
+# Required Notice: Copyright (c) 2026 outlawproductionstwo-hash
 """W5 tests: safe resume (validators), overwrite policy, disk-space precheck.
 
 Run with:  python tests/test_w5.py

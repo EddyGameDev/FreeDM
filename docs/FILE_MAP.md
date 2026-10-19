@@ -21,6 +21,9 @@ canonical.)
 F:\OMNI Config\Plan\FreeDM\
 ├── dist\
 │   └── FreeDM.exe              # BUILT APPLICATION (double-click to run)
+├── LICENSE                     # PolyForm Noncommercial 1.0.0 (full text)
+├── NOTICE                      # copyright notice / Required Notice line
+├── .gitignore                  # build artefacts, caches, partial downloads
 ├── docs\
 │   ├── OVERVIEW.md             # what it is, scope, how it works
 │   ├── FEATURES.md             # every feature + status + location
@@ -41,6 +44,7 @@ F:\OMNI Config\Plan\FreeDM\
 │   ├── test_n3.py              # N3 suite: size/checksum verification, cleanup
 │   ├── test_n4.py              # N4 suite: dynamic pieces, global limit
 │   ├── test_n5.py              # N5 suite: categories, filter, export/import
+│   ├── gui_testcase.py        # shared GUI test base (temp folder, no downloads)
 │   └── test_w1.py              # W1 suite: control server, token, payload
 ├── engine.py                   # download engine (the core)
 ├── store.py                    # SQLite persistent queue (W3)
@@ -433,6 +437,17 @@ Run with `python tests/test_n5.py` or `python -m pytest tests/test_n5.py`.
 Starts a download at a speed limit, pauses after 1.5 s, then calls
 `os._exit(0)` to simulate a hard crash (OS releases file handles).
 Usage: `python tests/crash_session1.py <out_dir> <url>`.
+
+### `LICENSE` / `NOTICE` / `.gitignore`
+- `LICENSE` — the complete, unmodified **PolyForm Noncommercial 1.0.0** text
+  (<https://polyformproject.org/licenses/noncommercial/1.0.0>). The project is
+  *source-available*, not open source: noncommercial use, modification and
+  redistribution are permitted, commercial use is not.
+- `NOTICE` — the copyright notice and the `Required Notice:` line that the
+  license requires to travel with the software. The same line is also the
+  first comment of every source file.
+- `.gitignore` — keeps `build/`, `dist/`, `__pycache__/` and stray `*.part`
+  files out of the repository.
 
 ### `build.ps1`
 Runs PyInstaller with the exact flags used for the shipped exe:

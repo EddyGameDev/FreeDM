@@ -1,3 +1,4 @@
+# Required Notice: Copyright (c) 2026 outlawproductionstwo-hash
 """Batch URL parsing and clipboard link detection (Milestone 2, goal N2).
 
 Deliberately headless - no Tkinter, no network - so the GUI and the tests share

@@ -1,3 +1,4 @@
+# Required Notice: Copyright (c) 2026 outlawproductionstwo-hash
 """Milestone 2 / goal N2 tests: batch URL parsing and clipboard detection.
 
 Run with:  python tests/test_n2.py

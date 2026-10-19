@@ -4,6 +4,11 @@
 [`NEXT_GOAL.md`](NEXT_GOAL.md) (Milestone 1 — **complete**) and
 [`ROADMAP.md`](ROADMAP.md) (full backlog).
 
+> **Published:** the project is published at
+> <https://github.com/outlawproductionstwo-hash/FreeDM> under the
+> **PolyForm Noncommercial 1.0.0** license (source-available, not open source).
+> See `LICENSE` and `NOTICE` at the repository root.
+
 Milestone 1 (W1–W5) made FreeDM browsable, session-aware, persistent and
 polite. Milestone 2 turns it from "works" into "nicer to live with", then
 strengthens the engine. This file is the authoritative, sequenced next-goal

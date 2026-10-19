@@ -1,3 +1,4 @@
+// Required Notice: Copyright (c) 2026 outlawproductionstwo-hash
 // FreeDM Browser Handoff - MV3 service worker.
 //
 // For every browser download: pause it, ask FreeDM (127.0.0.1) to take it

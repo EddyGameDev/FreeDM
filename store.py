@@ -1,3 +1,4 @@
+# Required Notice: Copyright (c) 2026 outlawproductionstwo-hash
 """Persistent job store for FreeDM (W3).
 
 SQLite database that records the download queue, status transitions and

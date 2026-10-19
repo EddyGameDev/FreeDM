@@ -1,3 +1,4 @@
+# Required Notice: Copyright (c) 2026 outlawproductionstwo-hash
 """Milestone 2 / goal N1 tests: settings persistence, live speed limit,
 job-details data and the ``speed_limit`` DB migration.
 

@@ -1,3 +1,4 @@
+# Required Notice: Copyright (c) 2026 outlawproductionstwo-hash
 """Minimal HTTP server with HTTP Range support, for testing FreeDM.
 
 Usage:  python tests/range_server.py [port] [file_size_mb]

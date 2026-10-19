@@ -1,3 +1,4 @@
+# Required Notice: Copyright (c) 2026 outlawproductionstwo-hash
 """Categories, folder rules, list filtering and queue import/export
 (Milestone 2, goal N5).
 

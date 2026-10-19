@@ -1,3 +1,4 @@
+// Required Notice: Copyright (c) 2026 outlawproductionstwo-hash
 const DEFAULTS = { enabled: true, port: 6801, token: "" };
 
 const $ = (id) => document.getElementById(id);

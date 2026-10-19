@@ -1,3 +1,4 @@
+# Required Notice: Copyright (c) 2026 outlawproductionstwo-hash
 """Milestone 2 / goal N4 tests: dynamic segmentation, adaptive piece sizing
 and the global (cross-download) speed limit.
 

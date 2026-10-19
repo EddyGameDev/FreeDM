@@ -1,3 +1,4 @@
+# Required Notice: Copyright (c) 2026 outlawproductionstwo-hash
 """Typed settings access for FreeDM (Milestone 2, goal N1).
 
 Settings live in the same SQLite database as the queue (the ``settings``

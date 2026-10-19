@@ -1,3 +1,4 @@
+# Required Notice: Copyright (c) 2026 outlawproductionstwo-hash
 """Milestone 2 / goal N5 tests: categories, list filtering and queue
 export/import.
 

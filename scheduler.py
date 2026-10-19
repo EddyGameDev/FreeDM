@@ -1,3 +1,4 @@
+# Required Notice: Copyright (c) 2026 outlawproductionstwo-hash
 """Polite concurrency scheduler for FreeDM (W4).
 
 Caps how many downloads run at once, how many connections are used in total,

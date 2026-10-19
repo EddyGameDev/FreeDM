@@ -1,3 +1,4 @@
+# Required Notice: Copyright (c) 2026 outlawproductionstwo-hash
 """W2 tests: HTTP session, cookies, headers, redirect handling.
 
 Run with:  python tests/test_w2.py

@@ -1,3 +1,4 @@
+# Required Notice: Copyright (c) 2026 outlawproductionstwo-hash
 """W4 tests: active/connection/host caps, FIFO queue, Retry-After.
 
 Run with:  python tests/test_w4.py

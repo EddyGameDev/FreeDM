@@ -1,3 +1,4 @@
+# Required Notice: Copyright (c) 2026 outlawproductionstwo-hash
 """W3 tests: persistent SQLite queue, DB-backed resume, failure isolation.
 
 Run with:  python tests/test_w3.py
