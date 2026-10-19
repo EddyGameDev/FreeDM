@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>FreeDM Browser Handoff - Options</title>
+<style>
+  body { font: 14px/1.5 system-ui, sans-serif; margin: 24px; max-width: 520px; }
+  h1 { font-size: 18px; }
+  label { display: block; margin-top: 14px; font-weight: 600; }
+  input[type=text], input[type=number] { width: 100%; padding: 6px 8px;
+    box-sizing: border-box; font: inherit; }
+  .row { display: flex; gap: 8px; margin-top: 14px; }
+  #token-row input { flex: 1; }
+  button { font: inherit; padding: 4px 12px; }
+  #status { margin-top: 14px; font-weight: 600; }
+  .hint { color: #555; font-size: 13px; }
+</style>
+</head>
+<body>
+  <h1>FreeDM Browser Handoff</h1>
+  <p class="hint">In FreeDM click <b>Browser...</b>, copy the token, paste it here,
+     then hit Save. Downloads started in this browser are handed to FreeDM.</p>
+
+  <label><input type="checkbox" id="enabled"> Hand downloads to FreeDM</label>
+
+  <label for="port">FreeDM port</label>
+  <input type="number" id="port" min="1" max="65535" value="6801">
+
+  <label for="token">Token</label>
+  <div class="row" id="token-row">
+    <input type="text" id="token" placeholder="paste the token from FreeDM">
+  </div>
+
+  <div class="row">
+    <button id="save" type="button">Save</button>
+    <button id="test" type="button">Test connection</button>
+  </div>
+
+  <div id="status"></div>
+  <script src="options.js"></script>
+</body>
+</html>
