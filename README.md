@@ -13,13 +13,22 @@ simple GUI. No license fees, no ads, no paid APIs.
 
 ## Download / Run
 
-The built application is:
+**Windows build (single file, no installer):**
+<https://github.com/outlawproductionstwo-hash/FreeDM/releases/tag/v1.0.0>
+
+```
+FreeDM-1.0.0.exe
+```
+
+Just double-click it — that launches the GUI. It needs no installation and
+makes no registry changes; the queue and your settings live in
+`%APPDATA%\FreeDM`.
+
+The built application in a source checkout is:
 
 ```
 dist\FreeDM.exe
 ```
-
-Just double-click it — that launches the GUI.
 
 ### GUI usage
 1. Paste a URL into the **URL(s)** field. To add several at once, paste one URL
@@ -154,6 +163,9 @@ below if you want live CLI progress.)
 
 ```
 FreeDM/
+├── LICENSE                 # PolyForm Noncommercial 1.0.0 (full text)
+├── NOTICE                  # copyright notice / Required Notice line
+├── .gitignore              # build artefacts, caches, partial downloads
 ├── engine.py              # download engine (segments, resume, retry, limits)
 ├── store.py               # SQLite queue (jobs, segments, settings)
 ├── settings.py            # typed settings (folder, threads, limit, window)
@@ -179,7 +191,8 @@ FreeDM/
 │   ├── test_n2.py         # N2 batch parsing/clipboard tests
 │   ├── test_n3.py         # N3 verification/cleanup tests
 │   ├── test_n4.py         # N4 dynamic segmentation/global limit tests
-│   └── test_n5.py         # N5 categories/filter/export-import tests
+│   ├── test_n5.py         # N5 categories/filter/export-import tests
+│   └── gui_testcase.py    # shared GUI test base (temp folder, no downloads)
 ├── dist/FreeDM.exe        # the built application
 └── build/                 # PyInstaller intermediate files
 ```
