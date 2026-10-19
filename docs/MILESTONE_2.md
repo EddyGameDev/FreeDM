@@ -4,10 +4,19 @@
 [`NEXT_GOAL.md`](NEXT_GOAL.md) (Milestone 1 — **complete**) and
 [`ROADMAP.md`](ROADMAP.md) (full backlog).
 
-> **Published:** the project is published at
+> **Published:** the project is prepared for publication at
 > <https://github.com/outlawproductionstwo-hash/FreeDM> under the
 > **PolyForm Noncommercial 1.0.0** license (source-available, not open source).
-> See `LICENSE` and `NOTICE` at the repository root.
+> See `LICENSE` and `NOTICE` at the repository root, and `docs/PUBLISHING.md`
+> for the exact publishing steps.
+>
+> **Status note (2026-10-19):** the repository, a `v1.0.0` release and the
+> Windows build were created and the uploaded binary was verified
+> (hash + `--browser-selftest` PASS). The GitHub account
+> `outlawproductionstwo-hash` was then **suspended by GitHub**, so the
+> repository is currently not publicly visible. The full history is intact
+> locally (`Plan\FreeDM\.git`, 3 commits) — re-publish with
+> `docs/PUBLISHING.md` once access is restored or from another account.
 
 Milestone 1 (W1–W5) made FreeDM browsable, session-aware, persistent and
 polite. Milestone 2 turns it from "works" into "nicer to live with", then
