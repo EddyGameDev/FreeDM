@@ -89,6 +89,42 @@ First public build.
 - The windowed build has no console, so CLI progress is silent in the
   packaged app.
 
+## [v1.3.0] - 2026-10-19
+
+Browser extras: Firefox support, a right-click menu, and native messaging.
+
+### Build
+
+- `FreeDM-1.3.0.exe` - Windows x64, single file, no installer (17.5 MB).
+- SHA-256: `584bd0d49f70c16d18a79fb65b3cd9c650aad016a7ca6945a3d3d45a615b3726`
+- Verify with: `certutil -hashfile FreeDM-1.3.0.exe SHA256`
+- Source: <https://github.com/EddyGameDev/FreeDM>
+
+### Added
+
+- **Firefox extension** - the same handoff code with a Firefox manifest (a
+  background page instead of a service worker, an options tab and a gecko
+  add-on id). FreeDM's **Browser...** dialog can export the Firefox build;
+  load it with `about:debugging` → **Load Temporary Add-on...**.
+- **"Download with FreeDM" context menu** - right-click a link, a video, an
+  image or a page to hand it to FreeDM. The page's cookies travel with it, so
+  a protected link still works.
+- **Native messaging host** - `FreeDM.exe --native-host` plus an
+  **Install native host** button in the **Browser...** dialog. With it
+  registered, the extension can start FreeDM by itself when a download is
+  handed over while the app is closed. Without it the download stays in the
+  browser, exactly as before.
+
+### Changed
+
+- The extension now asks for the `contextMenus` permission, which the new
+  right-click menu uses. It still asks for nothing it does not use.
+
+### Notes
+
+- After installing the native host, restart the browser so it picks up the
+  registration.
+
 ## [v1.2.1] - 2026-10-19
 
 Security review and fixes. No behaviour changes for normal use.

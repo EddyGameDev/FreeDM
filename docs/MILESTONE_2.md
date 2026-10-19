@@ -1,6 +1,6 @@
 # FreeDM — Milestone 2: Everyday polish → engine strength
 
-**Status:** started 2026-10-19 · **N1–N7 done** · next: **N8** · Companion to
+**Status:** started 2026-10-19 · **N1–N8 done** · next: **N9** · Companion to
 [`NEXT_GOAL.md`](NEXT_GOAL.md) (Milestone 1 — **complete**) and
 [`ROADMAP.md`](ROADMAP.md) (full backlog).
 
@@ -32,7 +32,7 @@ without re-analysing the code.
 | 2026-10-19 | **N5 — Organization & history** | **DONE.** New `categories.py` (categories, rules parser, filter, queue export/import). GUI: search box + status filter that hides non-matching rows live, **Sort into category folders** toggle with an editable **Categories...** dialog, **Export...**/**Import...** of the queue, **Show in Folder** (reveal in Explorer) and a friendlier **Open File** fallback. Engine: `dest_resolver` hook so the category folder is chosen from the *real* file name after the probe. 32/32 tests. Rebuilt exe verified (frozen `--selftest` PASS). |
 | 2026-10-19 | **N6 — Automation** | **DONE.** New `automation.py` (time/window helpers). Engine: `SCHEDULED` status + `start_at` (persisted, auto-migrated). Scheduler: holds jobs until their time, honours a daily window (may wrap past midnight), and "Start Now" overrides both. GUI: **Schedule...** dialog, a **Window** control in the filter bar, **Shut down when done** (confirmation-guarded). 36/36 tests. Also added `CHANGELOG.md` + `scripts/release_notes.py` so every build ships its own patch notes. |
 | 2026-10-19 | **N7 — Network options** | **DONE.** New `network.py`: shared proxy configuration (HTTP/SOCKS, credentials, bypass list), IPv4/IPv6 address preference, mirror URL building. Engine: every request honours the proxy (bypassed hosts get a per-request override), mirrors are tried in turn by the probe and the segment download, and the `mirrors` column is persisted (auto-migrated). GUI: **Network...** dialog with a **Test connection** button, and **Mirrors...** for alternative sources. 30/30 tests. |
-| next | N8 — Browser extras | Not started |
+| 2026-10-19 | **N8 — Browser extras** | **DONE.** Firefox build of the extension (event page + gecko id, exported from the same source), a right-click **Download with FreeDM** context menu for links/media/pages, and a native messaging host (`--native-host`) so the extension can start FreeDM when it is closed. 32/32 tests. |
 | next | N9 — Packaging & quality | Not started |
 | later | N10 — Streaming media | Deferred (large, separate subsystem) |
 
@@ -49,7 +49,7 @@ without re-analysing the code.
 | N5 | Organization & history | P1.2, P3.2, P3.3, P3.4 | M | **DONE** |
 | N6 | Automation | P2.1, P2.2, P2.3 | M | **DONE** |
 | N7 | Network options | P5.5, P5.8, P5.4 | M | **DONE** |
-| N8 | Browser extras | P4.2, P4.5, P4.3 | M | Not started |
+| N8 | Browser extras | P4.2, P4.5, P4.3 | M | **DONE** |
 | N9 | Packaging & quality | P0.6, P0.7, P0.8, P7.1, P7.4, P7.5, P7.6, P7.8 | M | Not started |
 | N10 | Streaming media | P6.1–P6.4 | L | Deferred |
 
@@ -357,17 +357,66 @@ and migration, the new settings, and 5 real-GUI tests).
 
 ---
 
-## N8 — Browser extras
+## Security review — 2026-10-19 ✅ DONE
 
-**Build:** Firefox extension (`P4.2`), right-click "Download with FreeDM"
-context menu (`P4.5`), and native-messaging auto-launch of the app (`P4.3`).
-Reuse the W1 loopback protocol; only the packaging changes.
+A review of the whole application before N8, with the findings written up in
+[`SECURITY.md`](SECURITY.md) and pinned by `tests/test_security.py`.
 
-**Acceptance criteria:**
-- Firefox hands downloads over exactly like Chrome/Edge.
-- The context menu enqueues the link/video URL.
+**Fixed (8):** the control token was in `chrome.storage.sync` (it left the
+device); the control server sent `Access-Control-Allow-Origin: *` (any web
+page could read it); it did not validate the `Host` header (DNS rebinding);
+the extension asked for the unused `webRequest` permission; a hand-written
+`Cookie:` header was dropped on every redirect and sent to any host the
+session talked to; opening a downloaded executable ran it without asking; the
+server returned internal error text; and `dest_dir` from the extension was
+used unchecked.
+
+**Checked and found sound:** the loopback-only bind, the 256-bit token and
+its constant-time comparison, the request-size cap, the SQL parameterisation,
+the path-traversal handling of file names, atomic state writes, TLS
+verification, and the fact that `requests` already strips `Authorization` on a
+cross-host redirect.
+
+**Tests:** `tests/test_security.py` — 29/29 pass.
+
+---
+
+## N8 — Browser extras ✅ DONE
+
+**Why:** the handoff only worked in Chrome/Edge, and only for downloads the
+browser started on its own. A link you right-click had no way into FreeDM, and
+a closed app meant the download stayed in the browser.
+
+**What shipped:**
+- **Firefox extension** (`P4.2`): the same source, a second manifest
+  (`extension/manifest.firefox.json`) with the differences that matter — a
+  background *page* instead of a service worker, an options *tab* instead of a
+  page, and a gecko add-on id. The **Browser...** dialog can export the
+  Firefox build; the handoff protocol is unchanged, so Firefox hands downloads
+  over exactly like Chrome/Edge.
+- **"Download with FreeDM" context menu** (`P4.5`): the extension adds a
+  menu entry for links, media and pages. The menu picks the link, the media
+  source or the page URL, and hands it to FreeDM through the same `/add`
+  endpoint as a normal download — with the cookies of that page, so a
+  protected link still works.
+- **Native messaging host** (`P4.3`): a new `native_host.py` and a
+  `FreeDM.exe --native-host` mode. The **Browser...** dialog can register the
+  host with Chrome and Firefox (a manifest plus a per-user registry entry).
+  When the extension finds no app running, it asks the browser to start the
+  host, which launches FreeDM and lets the extension retry the handoff.
+  Without the host registered the download simply stays in the browser.
+
+**Acceptance criteria:** all met.
+- Firefox hands downloads over exactly like Chrome/Edge. ✅
+- The context menu enqueues the link/video URL. ✅
 - If FreeDM is closed, the native host can start it (or the download is left to
-  the browser).
+  the browser). ✅
+
+**Tests:** `tests/test_n8.py` — 32/32 pass (both manifests, the export for each
+browser, the context-menu code, the native messaging wire format, the host's
+answers, the registry keys, the `--native-host` entry point, and 4 real-GUI
+tests). The native host was also driven end-to-end with a real browser-style
+message on stdin.
 
 ---
 

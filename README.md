@@ -116,6 +116,17 @@ closed, the browser download continues as usual. The control server listens only
 on `127.0.0.1:6801` and requires the token; uncheck **Accept downloads from the
 browser** to turn it off.
 
+**Firefox:** click **Export for Firefox...** and load the folder with
+`about:debugging#/runtime/this-firefox` → **Load Temporary Add-on...**. The
+handoff works exactly like Chrome/Edge.
+
+**Right-click → Download with FreeDM** hands a link, a video or a page to
+FreeDM, with that page's cookies, so protected links work too.
+
+**Install native host** lets the browser start FreeDM by itself when a
+download is handed over while the app is closed. Without it the download
+simply stays in the browser.
+
 ## Command line
 
 The same exe also works from a terminal:
@@ -187,6 +198,7 @@ FreeDM/
 ├── verify.py              # size/checksum verification + orphan cleanup
 ├── categories.py          # categories, list filter, queue export/import
 ├── automation.py          # scheduled starts, daily window, shut-down
+├── native_host.py          # native messaging host (starts the app)
 ├── network.py             # proxy, IPv4/IPv6 preference, mirror sources
 ├── scheduler.py           # active/connection/host caps + FIFO queue
 ├── control_server.py      # loopback browser-handoff endpoint (token auth)
@@ -209,6 +221,9 @@ FreeDM/
 │   ├── test_n4.py         # N4 dynamic segmentation/global limit tests
 │   ├── test_n5.py         # N5 categories/filter/export-import tests
 │   ├── test_n6.py         # N6 scheduling/window/shut-down tests
+│   ├── test_n7.py         # N7 proxy/address-family/mirror tests
+│   ├── test_n8.py         # N8 Firefox/context-menu/native-host tests
+│   ├── test_security.py   # security regressions
 │   ├── test_changelog.py  # release-notes tooling tests
 │   └── gui_testcase.py    # shared GUI test base (temp folder, no downloads)
 ├── dist/FreeDM.exe        # the built application
@@ -276,6 +291,8 @@ python tests\test_n4.py
 python tests\test_n5.py
 python tests\test_n6.py
 python tests\test_n7.py
+python tests\test_n8.py
+python tests\test_security.py
 python tests\test_changelog.py
 ```
 

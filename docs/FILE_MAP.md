@@ -50,6 +50,7 @@ F:\OMNI Config\Plan\FreeDM\
 │   ├── test_n5.py              # N5 suite: categories, filter, export/import
 │   ├── test_n6.py              # N6 suite: scheduling, window, shut-down
 │   ├── test_n7.py              # N7 suite: proxy, address family, mirrors
+│   ├── test_n8.py              # N8 suite: Firefox, context menu, native host
 │   ├── test_security.py        # security regressions (see docs/SECURITY.md)
 │   ├── test_changelog.py       # release-notes tooling
 │   ├── gui_testcase.py        # shared GUI test base (temp folder, no downloads)
@@ -282,6 +283,21 @@ to get the file from when one source is slow or dead.
 | `sorted_addresses(host, port, prefer_ipv4)` | the resolved addresses, preferred family first (diagnostics) |
 | `mirror_url(base, path)` / `mirror_path(base, url)` | the URL of a file on a mirror (the original path and query are kept) |
 
+### `native_host.py` — native messaging (N8)
+Lets the browser extension start FreeDM when the app is closed. The browser
+starts the registered program and talks to it over stdin/stdout using the
+native messaging format: a 4-byte little-endian length and a UTF-8 JSON
+message.
+
+| Symbol | Purpose |
+|---|---|
+| `HOST_NAME` | the name the browser knows the host by (`org.freedm.app`) |
+| `manifest_path()` / `build_manifest()` / `write_manifest()` | the native messaging manifest |
+| `install_host()` / `uninstall_host()` / `is_installed()` | register the host with Chrome and Firefox (a per-user registry key on Windows) |
+| `handle_message(payload)` | answer `ping` / `launch` |
+| `launch_app()` | start the GUI in the background |
+| `read_message()` / `write_message()` | the length-prefixed JSON wire format |
+| `main()` | the `--native-host` entry point |
 ### `security.md` / `docs/SECURITY.md`
 The security review of 2026-10-19: every finding, what was checked, what was
 found and what was fixed, plus the rules future changes must keep. The
@@ -463,7 +479,8 @@ invalid reported, mixed add, clipboard off by default, confirmed add, declined
 add, offered only once). Run with `python tests/test_n2.py` or
 `python -m pytest tests/test_n2.py`.
 
-### `tests/test_n3.py`The N3 suite (34 tests): checksum parsing (all algorithms, bare/explicit
+### `tests/test_n3.py`
+The N3 suite (34 tests): checksum parsing (all algorithms, bare/explicit
 forms, unknown algorithm, wrong length, non-hex), `file_digest` vs hashlib,
 size verify (ok/short/unknown), checksum verify (match/mismatch showing both
 digests/none/invalid), orphan detection by age + pattern, orphan cleanup,

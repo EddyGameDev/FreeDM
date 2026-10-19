@@ -130,8 +130,24 @@ class ExtensionManifestTests(unittest.TestCase):
         self.assertNotIn("webRequest", self.manifest["permissions"])
 
     def test_only_the_needed_permissions_are_requested(self):
-        self.assertEqual(sorted(self.manifest["permissions"]),
-                         ["cookies", "downloads", "storage"])
+        """Every requested permission must actually be used (SECURITY.md S4)."""
+        markers = {
+            "downloads": "chrome.downloads",
+            "cookies": "chrome.cookies",
+            "storage": "chrome.storage",
+            "contextMenus": "contextMenus",
+        }
+        with open(os.path.join(self.root, "background.js"), "r",
+                  encoding="utf-8") as fh:
+            code = fh.read()
+        with open(os.path.join(self.root, "options.js"), "r",
+                  encoding="utf-8") as fh:
+            code += fh.read()
+        for permission in self.manifest["permissions"]:
+            self.assertIn(permission, markers,
+                          f"unknown permission {permission!r} - add a marker")
+            self.assertIn(markers[permission], code,
+                          f"permission {permission!r} is never used")
 
     def test_loopback_is_in_the_host_permissions(self):
         hosts = self.manifest["host_permissions"]

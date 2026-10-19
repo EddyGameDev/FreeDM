@@ -103,6 +103,10 @@ limited. **Planned** = not yet built (see `ROADMAP.md`).
 | A92 | Only the permissions the extension uses are requested | Implemented (security) | `extension\manifest.json` |
 | A93 | A hand-written `Cookie:` header is scoped to its host | Implemented (security) | `engine.py` → `_apply_cookie_header` |
 | A94 | Executables and scripts ask before they are opened | Implemented (security) | `gui.py` → `EXECUTABLE_EXTENSIONS` |
+| A95 | Firefox build of the extension (same source, own manifest) | Implemented (N8) | `extension\manifest.firefox.json`; `export_extension(browser="firefox")` |
+| A96 | "Download with FreeDM" context menu (link/media/page) | Implemented (N8) | `extension\background.js` → `handleMenuClick` |
+| A97 | Native messaging host that can start the app | Implemented (N8) | `native_host.py`; `main.py --native-host` |
+| A98 | Register / remove the native host | Implemented (N8) | `native_host.py` → `install_host`, `uninstall_host` |
 
 ### Segment sizing rules (`engine.py`)
 - Files ≤ `MIN_SEGMENT_SIZE` (1 MB) are downloaded as a single stream.
@@ -190,6 +194,7 @@ On success both the `.part` and the `.state.json` are removed.
 | B48 | Network... dialog (proxy, bypass, IPv4 preference, test) | Implemented (N7) |
 | B49 | Mirrors... dialog for the selected job | Implemented (N7) |
 | B50 | Confirmation before opening an executable/script | Implemented (security) |
+| B51 | Export for Firefox / install or remove the native host | Implemented (N8) |
 
 Default save folder: `%USERPROFILE%\Downloads`.
 
@@ -255,6 +260,7 @@ results do not depend on third-party sites.
 | **N6 suite: `tests/test_n6.py` (36 tests)** | **Pass** |
 | **N7 suite: `tests/test_n7.py` (30 tests)** | **Pass** |
 | **Security suite: `tests/test_security.py` (29 tests)** | **Pass** |
+| **N8 suite: `tests/test_n8.py` (32 tests)** | **Pass** |
 | **Changelog suite: `tests/test_changelog.py` (11 tests)** | **Pass** |
 | A future start time holds the job in `scheduled` | Pass — released when the time comes |
 | A closed window blocks every start; Start Now overrides it | Pass |

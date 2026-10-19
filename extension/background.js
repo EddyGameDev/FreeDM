@@ -131,3 +131,89 @@ async function handleCreated(item) {
 chrome.downloads.onCreated.addListener((item) => {
   handleCreated(item).catch((e) => console.error("FreeDM handoff:", e));
 });
+
+// --- "Download with FreeDM" context menu (N8) ---------------------------
+// The link, media or page URL is handed to FreeDM the same way a browser
+// download is. Nothing is queued without the token, and the menu only
+// appears when the extension is enabled.
+const MENU_ID = "freedm-download-with-freedm";
+
+function menuTarget(info) {
+  if (!info) return "";
+  if (info.linkUrl) return info.linkUrl;
+  if (info.mediaSrcUrl) return info.mediaSrcUrl;
+  if (info.srcUrl) return info.srcUrl;
+  if (info.pageUrl) return info.pageUrl;
+  return "";
+}
+
+async function handleMenuClick(info) {
+  const url = menuTarget(info);
+  if (!url || !/^https?:/i.test(url)) return;
+
+  const cfg = await getConfig();
+  if (!cfg.enabled || !cfg.token) return;
+
+  // Make sure the app is running: ask the native host to start it, then
+  // give it a moment to answer.
+  if (!(await ping(cfg))) {
+    try {
+      await chrome.runtime.sendNativeMessage("org.freedm.app", {
+        action: "launch",
+      });
+    } catch (e) {
+      /* no native host installed: the browser keeps the download */
+    }
+    for (let i = 0; i < 20; i += 1) {
+      await new Promise((r) => setTimeout(r, 500));
+      if (await ping(cfg)) break;
+    }
+  }
+
+  const body = {
+    url,
+    cookies: await cookiesFor(url),
+    referer: info.pageUrl || undefined,
+    user_agent: navigator.userAgent,
+    filename: undefined,
+    headers: {},
+  };
+
+  try {
+    const r = await fetch(`${base(cfg)}/add`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${cfg.token}`,
+      },
+      body: JSON.stringify(body),
+    });
+    if (!r.ok) console.error("FreeDM refused the request:", r.status);
+  } catch (e) {
+    console.error("FreeDM handoff failed:", e);
+  }
+}
+
+function createMenu() {
+  const api = chrome.contextMenus || chrome.menus;
+  if (!api) return;
+  try {
+    api.removeAll(() => {
+      api.create({
+        id: MENU_ID,
+        title: "Download with FreeDM",
+        contexts: ["link", "video", "audio", "image", "page"],
+      });
+    });
+  } catch (e) {
+    console.error("FreeDM menu:", e);
+  }
+}
+
+const menuApi = chrome.contextMenus || chrome.menus;
+if (menuApi && menuApi.onClicked) {
+  menuApi.onClicked.addListener((info) => {
+    handleMenuClick(info).catch((e) => console.error("FreeDM menu:", e));
+  });
+  createMenu();
+}

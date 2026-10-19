@@ -38,6 +38,7 @@ from categories import (default_rules, format_rules, load_rules, parse_rules,
                         classify, destination_for, matches_filter,
                         export_queue, import_queue, STATUS_FILTERS)
 from network import PROXY, install_address_preference, address_preference
+import native_host
 from verify import (ALGORITHMS, parse_checksum, find_orphans, cleanup_orphans)
 from scheduler import Scheduler
 from control_server import ControlServer, export_extension, token_path
@@ -1155,17 +1156,49 @@ class App:
         self.root.clipboard_append(self.control.token)
         messagebox.showinfo(APP_NAME, "Token copied to the clipboard.")
 
-    def _export_extension(self) -> None:
+    def _export_extension(self, browser: str = "chrome") -> None:
         try:
-            dest = export_extension()
+            dest = export_extension(browser=browser)
         except Exception as exc:       # noqa: BLE001
             messagebox.showerror(APP_NAME, f"Could not export the extension: {exc}")
             return
+        if browser == "firefox":
+            how = ("about:debugging#/runtime/this-firefox > Load Temporary "
+                   "Add-on... and pick that folder")
+        else:
+            how = ("chrome://extensions > Developer mode > Load unpacked "
+                   "and pick that folder")
         messagebox.showinfo(
             APP_NAME,
             "Extension exported to:\n" + dest
-            + "\n\nLoad it via chrome://extensions > Developer mode > Load unpacked.")
+            + f"\n\nTo install it in {browser.capitalize()}: {how}")
         self._open(dest)
+
+    def _install_native_host(self) -> None:
+        """Register the native messaging host so the extension can start us."""
+        try:
+            ok, message = native_host.install_host()
+        except Exception as exc:       # noqa: BLE001
+            messagebox.showerror(APP_NAME, f"Could not install: {exc}")
+            return
+        if ok:
+            messagebox.showinfo(
+                APP_NAME,
+                "Native host installed.\n\n" + message +
+                "\n\nNow the extension can start FreeDM by itself when a "
+                "download is handed over while the app is closed.")
+        else:
+            messagebox.showwarning(APP_NAME, message)
+
+    def _uninstall_native_host(self) -> None:
+        try:
+            ok, message = native_host.uninstall_host()
+        except Exception as exc:       # noqa: BLE001
+            messagebox.showerror(APP_NAME, f"Could not remove: {exc}")
+            return
+        messagebox.showinfo(
+            APP_NAME, message if ok else
+            "Nothing to remove.\n\n" + message)
 
     def _browser_dialog(self) -> None:
         win = tk.Toplevel(self.root)
@@ -1199,6 +1232,20 @@ class App:
 
         ttk.Button(win, text="Export extension...",
                    command=self._export_extension).pack(anchor="w", **pad)
+        row = ttk.Frame(win)
+        row.pack(anchor="w", padx=12)
+        ttk.Button(row, text="Export for Firefox...",
+                   command=lambda: self._export_extension("firefox")
+                   ).pack(side="left")
+        ttk.Button(row, text="Install native host",
+                   command=self._install_native_host).pack(side="left", padx=(8, 0))
+        ttk.Button(row, text="Remove native host",
+                   command=self._uninstall_native_host).pack(side="left", padx=(8, 0))
+
+        native_state = ("installed" if native_host.is_installed()
+                        else "not installed")
+        ttk.Label(win, text=f"Native host (lets the browser start FreeDM): "
+                            f"{native_state}").pack(anchor="w", padx=12)
 
         help_text = (
             "1. Click Export extension and load the folder via\n"

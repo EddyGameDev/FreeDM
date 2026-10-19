@@ -1,4 +1,4 @@
-# FreeDM Browser Handoff (Chrome / Edge)
+# FreeDM Browser Handoff (Chrome / Edge / Firefox)
 
 An unpacked Manifest V3 extension that sends browser downloads to the FreeDM
 desktop app, cancelling the browser's copy so nothing is downloaded twice.
@@ -12,6 +12,15 @@ desktop app, cancelling the browser's copy so nothing is downloaded twice.
 3. Open the extension's **Options**, paste the token shown in FreeDM's
    **Browser...** dialog, and click **Save**.
 
+### Firefox
+
+1. In FreeDM click **Browser...** → **Export for Firefox...**.
+2. In Firefox go to `about:debugging#/runtime/this-firefox`, click
+   **Load Temporary Add-on...** and pick the exported `manifest.json`.
+3. Paste the token in the extension's Options and **Save**.
+
+The handoff itself is identical in both browsers.
+
 ## Behaviour
 
 - Enabled + FreeDM running: a new download is paused, handed to FreeDM
@@ -19,6 +28,10 @@ desktop app, cancelling the browser's copy so nothing is downloaded twice.
 - FreeDM closed: the download is resumed and the browser handles it normally.
 - FreeDM running but the token is wrong: the POST is rejected and the browser
   download continues.
+- **Right-click → Download with FreeDM** hands a link, a video or a page to
+  FreeDM, with that page's cookies.
+- If the **native host** is installed (FreeDM → **Browser...** → **Install
+  native host**), the extension can start FreeDM by itself when it is closed.
 
 ## Security notes
 

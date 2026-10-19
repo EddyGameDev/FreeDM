@@ -6,6 +6,7 @@ Usage:
     FreeDM.exe URL [-o DIR] [-t N]      -> command-line download
     FreeDM.exe --selftest URL DIR       -> headless engine check (writes a log)
     FreeDM.exe --browser-selftest [DIR] -> headless control-server check
+    FreeDM.exe --native-host        -> native messaging host (started by the browser)
 """
 from __future__ import annotations
 
@@ -154,6 +155,10 @@ def main(argv: list[str] | None = None) -> int:
 
     if argv and argv[0] == "--browser-selftest":
         return _browser_selftest(argv[1:])
+
+    if argv and argv[0] == "--native-host":
+        import native_host
+        return native_host.main()
 
     if not argv:
         from gui import run_gui

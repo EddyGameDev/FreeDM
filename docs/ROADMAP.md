@@ -87,10 +87,10 @@ Effort is rough developer time: **S** ≈ ≤1 day, **M** ≈ 2–4 days,
 | # | Item | Effort | Notes |
 |---|---|---|---|
 | ~~P4.1~~ | ~~**Chrome/Edge extension** (Manifest V3)~~ | ~~M~~ | **DONE (W1).** `extension/`: intercepts new downloads, forwards URL/cookies/referer/UA, cancels the browser copy, resumes it when FreeDM is closed. |
-| P4.2 | **Firefox extension** | M | Same logic, different manifest (MV2/MV3 variant). |
-| P4.3 | **Native messaging host** | M | Register a small host exe so the extension can launch/control FreeDM. Not needed for the W1 handoff, which uses the loopback server. |
+| ~~P4.2~~ | ~~**Firefox extension**~~ | ~~M~~ | **DONE (N8).** The same source with a Firefox manifest (background page, gecko id); **Export for Firefox...** in the Browser dialog. |
+| ~~P4.3~~ | ~~**Native messaging host**~~ | ~~M~~ | **DONE (N8).** `FreeDM.exe --native-host`; register it from the Browser dialog so the extension can start the app. |
 | ~~P4.4~~ | ~~**Local control server**~~ | ~~S~~ | **DONE (W1).** `control_server.py`: loopback-only `GET /ping` + token-protected `POST /add`. |
-| P4.5 | **"Download with FreeDM" context menu** | S | Depends on P4.1/P4.4. |
+| ~~P4.5~~ | ~~**"Download with FreeDM" context menu**~~ | ~~S~~ | **DONE (N8).** Right-click a link, a video or a page to hand it to FreeDM. |
 | ~~P4.6~~ | ~~**Forward cookies / referer / user-agent**~~ | ~~M~~ | **DONE (W2 engine + W1 wiring).** The extension now supplies cookies/referer/UA on every handoff. |
 
 ---

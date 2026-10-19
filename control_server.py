@@ -93,13 +93,29 @@ def extension_source_dir() -> str:
     return os.path.join(base, "extension")
 
 
-def export_extension(dest: str | None = None) -> str:
-    """Copy the bundled extension to a stable folder and return its path."""
+def export_extension(dest: str | None = None, browser: str = "chrome") -> str:
+    """Copy the bundled extension to a stable folder and return its path.
+
+    ``browser`` is ``"chrome"`` (the default) or ``"firefox"``. The Firefox
+    build uses a different manifest: an event page instead of a service
+    worker, an options *tab* instead of a page, and the gecko add-on id.
+    """
     src = extension_source_dir()
     if not os.path.isdir(src):
         raise FileNotFoundError(f"extension folder not found: {src}")
     dest = dest or os.path.join(app_data_dir(), "extension")
     shutil.copytree(src, dest, dirs_exist_ok=True)
+    if browser == "firefox":
+        firefox_manifest = os.path.join(dest, "manifest.firefox.json")
+        if os.path.exists(firefox_manifest):
+            shutil.copyfile(firefox_manifest,
+                            os.path.join(dest, "manifest.json"))
+            os.remove(firefox_manifest)
+    else:
+        # A Firefox export left behind must not confuse a Chrome install.
+        stray = os.path.join(dest, "manifest.firefox.json")
+        if os.path.exists(stray):
+            os.remove(stray)
     return dest
 
 

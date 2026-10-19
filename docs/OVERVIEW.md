@@ -31,7 +31,9 @@ crashes without losing progress.
   FIFO queue with Start Now / reorder, and `Retry-After` backoff.
 - Browser handoff: a Chrome/Edge extension sends clicks to a loopback-only,
   token-protected control server; the browser's copy is cancelled, or resumed
-  if FreeDM is not running.
+  if FreeDM is not running. A Firefox build, a "Download with FreeDM" context
+  menu and a native messaging host (so the browser can start FreeDM) are
+  included too.
 - Single-stream fallback when a server does not support `Range`.
 - Retries with exponential backoff.
 - Integrity checks: a short download is never reported as done, and an
@@ -62,8 +64,10 @@ crashes without losing progress.
 These are deliberately **not** implemented. Do not assume they exist:
 
 - No Firefox extension or right-click "Download with FreeDM" menu (the
-  Chrome/Edge handoff and the loopback control server exist).
-- No auto-launch of the app from the browser (native messaging).
+  Chrome/Edge handoff and the loopback control server exist). → **N8 added
+  both**, plus the native messaging host.
+- No auto-launch of the app from the browser (native messaging). → **N8 added
+  the native messaging host**, so the extension can start FreeDM.
 - No timed/scheduled start or shutdown-when-done. A concurrency queue exists
   (active/connection/host caps, W4), but it does not run on a timer.
 - No FTP or SFTP support (HTTP/HTTPS only).
