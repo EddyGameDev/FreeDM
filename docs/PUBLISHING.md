@@ -4,12 +4,26 @@ FreeDM is published as a **public** repository under the **PolyForm
 Noncommercial 1.0.0** license (source-available, not open source):
 
 - Repository: <https://github.com/EddyGameDev/FreeDM>
+- Release: <https://github.com/EddyGameDev/FreeDM/releases/tag/v1.0.0>
 - License: `LICENSE` (complete, unmodified PolyForm Noncommercial 1.0.0 text)
 - Copyright notice: `NOTICE`
-- Releases: the Windows build is attached to the release page
+- Releases: the Windows build (`FreeDM-1.0.0.exe`) is attached to the release
 
 The repository is a normal git repository: `Plan\FreeDM\.git` holds the full
 history, and the working copy at `F:\OMNI Config\FreeDM` is a plain file copy.
+
+> **What happened on 2026-10-19.** The project was first published under the
+> account `outlawproductionstwo-hash`. That account was then **suspended by
+> GitHub** within minutes - the API returned *"Sorry. Your account was
+> suspended"* and the account now 404s. No reason is given by the API; the
+> likely cause is an automated trigger (see §5). The repository was re-created
+> under the account `EddyGameDev` and the full local history was pushed to it
+> unchanged, together with a verified `v1.0.0` release.
+>
+> If this ever happens again: **do not re-upload from a fresh account to work
+> around a content-related suspension** - that is circumventing the
+> enforcement. Appeal instead, or publish from an established account once the
+> reason is known.
 
 ---
 
@@ -90,3 +104,35 @@ GET https://api.github.com/repos/<user>/FreeDM/releases
 - Update `docs/MILESTONE_2.md` (progress log) and the "Download / Run"
   section of `README.md` with the release link.
 - Re-sync the working copy and verify the hashes, as with any other change.
+
+## 5. If the account gets suspended
+
+GitHub's API gives no reason - it only says *"Sorry. Your account was
+suspended"* (HTTP 403) and the profile returns 404. Check, in this order:
+
+1. **The account's email inbox** (including spam). GitHub sends a notice that
+   names the reason category and links the appeal form. This is the only
+   authoritative source.
+2. **The release asset scan.** GitHub scans uploaded binaries with
+   VirusTotal, and a PyInstaller `--onefile` exe is a classic false positive
+   (it bundles a Python runtime and unpacks itself at run time). The upload
+   succeeds and the account is suspended *minutes later*, when the scan
+   finishes. A brand-new account makes this much more likely.
+3. **New-account and spam heuristics.** Creating a repository, pushing a lot
+   of files and uploading a large binary within minutes is a classic spam
+   pattern.
+4. **Trademark or abuse reports.** The project deliberately avoids calling
+   itself an "IDM alternative" in the *repository description* (the first
+   line moderators and bots read); the README explains the comparison in
+   words instead.
+
+**What to do:** appeal at <https://support.github.com/contact> ("Account
+suspended") and state that the project is original work, source-available
+under PolyForm Noncommercial, with no paid or copyrighted content - and offer
+to publish source-only if a binary was the trigger. If the account cannot be
+recovered, publish from another established account: the local history is
+complete, so it is one `git push`.
+
+**Reduce the risk next time:** publish the source first and let the repository
+exist for a while before attaching an unsigned binary; or publish source only
+and let users build it (`build.ps1`).
