@@ -4,10 +4,12 @@ FreeDM is published as a **public** repository under the **PolyForm
 Noncommercial 1.0.0** license (source-available, not open source):
 
 - Repository: <https://github.com/EddyGameDev/FreeDM>
-- Release: <https://github.com/EddyGameDev/FreeDM/releases/tag/v1.0.0>
+- Release: <https://github.com/EddyGameDev/FreeDM/releases/tag/v1.1.0>
 - License: `LICENSE` (complete, unmodified PolyForm Noncommercial 1.0.0 text)
 - Copyright notice: `NOTICE`
-- Releases: the Windows build (`FreeDM-1.0.0.exe`) is attached to the release
+- Releases: the Windows build (`FreeDM-1.1.0.exe`) is attached to the release
+- Patch notes: `CHANGELOG.md` — the single source of truth; each release's
+  notes are extracted with `scripts/release_notes.py`
 
 The repository is a normal git repository: `Plan\FreeDM\.git` holds the full
 history, and the working copy at `F:\OMNI Config\FreeDM` is a plain file copy.
@@ -60,20 +62,36 @@ Credential Manager, so `git push` works without any token in the remote URL.
 
 ## 3. Publish a release with the Windows build
 
+> **The patch notes come from `CHANGELOG.md`.** It is the single source of
+> truth for every build, so the release page can never drift from the code.
+> Write the section first, then generate the notes from it.
+
 ```
-# 1. build it
+# 1. write the notes for the new version in CHANGELOG.md
+#    (### Build with the file name, size and SHA-256, then Added/Changed/Fixed)
+
+# 2. build it
 powershell -ExecutionPolicy Bypass -File build.ps1
 
-# 2. tag the release
-git tag -a v1.0.0 -m "FreeDM v1.0.0"
-git push origin v1.0.0
+# 3. record the real hash in CHANGELOG.md
+certutil -hashfile dist\FreeDM.exe SHA256
 
-# 3. create the release and attach the exe
-gh release create v1.0.0 dist\FreeDM.exe --title "FreeDM v1.0.0" --notes "..."
+# 4. commit, tag and push
+git add -A
+git commit -m "v1.1.0: ..."
+git tag -a v1.1.0 -m "FreeDM v1.1.0"
+git push origin main
+git push origin v1.1.0
+
+# 5. generate the release notes from the changelog
+python scripts\release_notes.py v1.1.0 --file notes.md
+
+# 6. create the release and attach the exe
+gh release create v1.1.0 dist\FreeDM.exe --title "FreeDM v1.1.0" --notes-file notes.md
 ```
 
-Always put the **SHA-256** of the exe in the release notes so users can
-verify the download:
+The notes file from step 5 is what goes on the release page. Always put the
+**SHA-256** of the exe in it so users can verify the download:
 
 ```
 certutil -hashfile dist\FreeDM.exe SHA256
@@ -94,7 +112,7 @@ GET https://api.github.com/repos/<user>/FreeDM/releases
 >
 > If a deleted asset still downloads with the old bytes, the CDN cached that
 > URL: publish the build under a **versioned file name**
-> (`FreeDM-1.0.0.exe`) so the URL changes.
+> (`FreeDM-1.1.0.exe`) so the URL changes.
 
 ## 4. After publishing
 
