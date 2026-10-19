@@ -3,7 +3,7 @@
 FreeDM is published as a **public** repository under the **PolyForm
 Noncommercial 1.0.0** license (source-available, not open source):
 
-- Repository: <https://github.com/outlawproductionstwo-hash/FreeDM>
+- Repository: <https://github.com/EddyGameDev/FreeDM>
 - License: `LICENSE` (complete, unmodified PolyForm Noncommercial 1.0.0 text)
 - Copyright notice: `NOTICE`
 - Releases: the Windows build is attached to the release page

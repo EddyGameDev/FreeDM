@@ -14,7 +14,7 @@ simple GUI. No license fees, no ads, no paid APIs.
 ## Download / Run
 
 **Windows build (single file, no installer):**
-<https://github.com/outlawproductionstwo-hash/FreeDM/releases/tag/v1.0.0>
+<https://github.com/EddyGameDev/FreeDM/releases/tag/v1.0.0>
 
 ```
 FreeDM-1.0.0.exe
