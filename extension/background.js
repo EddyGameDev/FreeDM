@@ -8,8 +8,13 @@
 
 const DEFAULTS = { enabled: true, port: 6801, token: "" };
 
+// The token authorises queuing downloads in FreeDM, so it stays on this
+// device: `storage.local` is never synced to the user's Google account or to
+// another browser. `storage.sync` would leak it.
+const AREA = chrome.storage.local;
+
 async function getConfig() {
-  const stored = await chrome.storage.sync.get(DEFAULTS);
+  const stored = await AREA.get(DEFAULTS);
   return { ...DEFAULTS, ...stored };
 }
 

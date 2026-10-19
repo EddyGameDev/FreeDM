@@ -1,10 +1,14 @@
 // Required Notice: Copyright (c) 2026 outlawproductionstwo-hash
 const DEFAULTS = { enabled: true, port: 6801, token: "" };
 
+// The token stays on this device (see background.js): storage.local is never
+// synced to the Google account or to another browser.
+const AREA = chrome.storage.local;
+
 const $ = (id) => document.getElementById(id);
 
 async function load() {
-  const cfg = await chrome.storage.sync.get(DEFAULTS);
+  const cfg = await AREA.get(DEFAULTS);
   $("enabled").checked = cfg.enabled !== false;
   $("port").value = cfg.port || 6801;
   $("token").value = cfg.token || "";
@@ -16,7 +20,7 @@ async function save() {
     port: parseInt($("port").value, 10) || 6801,
     token: $("token").value.trim(),
   };
-  await chrome.storage.sync.set(cfg);
+  await AREA.set(cfg);
   $("status").textContent = "Saved.";
   $("status").style.color = "#0a7a2f";
 }

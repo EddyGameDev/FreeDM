@@ -159,9 +159,21 @@ class W1Tests(unittest.TestCase):
         self.assertEqual(self.added[0]["threads"], 32)
 
     def test_preflight_options(self):
-        r = requests.options(f"{self.base}/add", timeout=5)
+        # Security: only a browser extension may talk to the control server.
+        # A web page must not get the CORS headers that would let it read
+        # the answers (see docs/SECURITY.md, finding S2).
+        r = requests.options(f"{self.base}/add",
+                             headers={"Origin": "https://evil.example"},
+                             timeout=5)
         self.assertEqual(r.status_code, 204)
-        self.assertEqual(r.headers.get("Access-Control-Allow-Origin"), "*")
+        self.assertIsNone(r.headers.get("Access-Control-Allow-Origin"))
+
+    def test_preflight_allows_the_extension_origin(self):
+        origin = "chrome-extension://abcdefghijklmnop"
+        r = requests.options(f"{self.base}/add", headers={"Origin": origin},
+                             timeout=5)
+        self.assertEqual(r.status_code, 204)
+        self.assertEqual(r.headers.get("Access-Control-Allow-Origin"), origin)
 
     # -- token + extension files -----------------------------------------
     def test_token_file_created_once_and_stable(self):

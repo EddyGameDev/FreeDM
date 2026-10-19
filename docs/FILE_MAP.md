@@ -33,6 +33,7 @@ F:\OMNI Config\Plan\FreeDM\
 │   ├── FILE_MAP.md             # this file
 │   ├── ROADMAP.md              # future improvements (long-term backlog)
 │   ├── MILESTONE_2.md          # sequenced next goals N1-N10 + progress
+│   ├── SECURITY.md             # the security review and its findings
 │   ├── NEXT_GOAL.md            # Milestone 1 record (W1-W5, complete)
 │   └── PROJECT_PLAN.md         # original research/plan document
 ├── tests\
@@ -49,6 +50,7 @@ F:\OMNI Config\Plan\FreeDM\
 │   ├── test_n5.py              # N5 suite: categories, filter, export/import
 │   ├── test_n6.py              # N6 suite: scheduling, window, shut-down
 │   ├── test_n7.py              # N7 suite: proxy, address family, mirrors
+│   ├── test_security.py        # security regressions (see docs/SECURITY.md)
 │   ├── test_changelog.py       # release-notes tooling
 │   ├── gui_testcase.py        # shared GUI test base (temp folder, no downloads)
 │   └── test_w1.py              # W1 suite: control server, token, payload
@@ -279,6 +281,11 @@ to get the file from when one source is slow or dead.
 | `address_preference()` | the current preference |
 | `sorted_addresses(host, port, prefer_ipv4)` | the resolved addresses, preferred family first (diagnostics) |
 | `mirror_url(base, path)` / `mirror_path(base, url)` | the URL of a file on a mirror (the original path and query are kept) |
+
+### `security.md` / `docs/SECURITY.md`
+The security review of 2026-10-19: every finding, what was checked, what was
+found and what was fixed, plus the rules future changes must keep. The
+regressions are pinned by `tests/test_security.py`.
 
 ### `CHANGELOG.md` and `scripts/release_notes.py`
 `CHANGELOG.md` is the single source of truth for the patch notes of every

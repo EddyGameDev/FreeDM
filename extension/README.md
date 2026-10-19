@@ -20,10 +20,23 @@ desktop app, cancelling the browser's copy so nothing is downloaded twice.
 - FreeDM running but the token is wrong: the POST is rejected and the browser
   download continues.
 
+## Security notes
+
+- The token is stored in `chrome.storage.local`, **not** in `chrome.storage.sync`:
+  it stays on this device and is never uploaded to the Google account or to
+  another browser. After re-installing the extension, paste the token again.
+- The extension only asks for the permissions it uses: `downloads` (to cancel
+  the browser's copy), `cookies` (to hand over the session) and `storage` (for
+  the settings). The control server only answers requests whose `Host` is
+  loopback, and only an extension origin gets CORS permission - an ordinary
+  web page cannot talk to it.
+- `host_permissions` includes `<all_urls>` because the `cookies` API can only
+  read a site's cookies when the extension has permission for that site.
+
 ## Files
 
 | File | Purpose |
 |---|---|
-| `manifest.json` | MV3 permissions: `downloads`, `cookies`, `storage`, `webRequest` |
+| `manifest.json` | MV3 permissions: `downloads`, `cookies`, `storage` |
 | `background.js` | the handoff logic (pause → ping → POST `/add` → cancel or resume) |
 | `options.html` / `options.js` | port + token settings and a connection test |

@@ -97,6 +97,12 @@ limited. **Planned** = not yet built (see `ROADMAP.md`).
 | A86 | Mirror sources: the probe and the download fall back to them | Implemented (N7) | `network.py` → `mirror_path`; engine → `_source_url`, `_advance_source` |
 | A87 | Mirrors persisted per job | Implemented (N7) | `store.py` → `mirrors` column; `Download.set_mirrors` |
 | A88 | Network dialog with a connection check | Implemented (N7) | `gui.py` → `network_dialog`, `_check_connection` |
+| A89 | Control server refuses a non-loopback `Host` header | Implemented (security) | `control_server.py` → `_host_allowed` |
+| A90 | CORS is only granted to extension origins | Implemented (security) | `control_server.py` → `_origin_allowed` |
+| A91 | The control token stays on the device (`storage.local`) | Implemented (security) | `extension\background.js`, `options.js` |
+| A92 | Only the permissions the extension uses are requested | Implemented (security) | `extension\manifest.json` |
+| A93 | A hand-written `Cookie:` header is scoped to its host | Implemented (security) | `engine.py` → `_apply_cookie_header` |
+| A94 | Executables and scripts ask before they are opened | Implemented (security) | `gui.py` → `EXECUTABLE_EXTENSIONS` |
 
 ### Segment sizing rules (`engine.py`)
 - Files ≤ `MIN_SEGMENT_SIZE` (1 MB) are downloaded as a single stream.
@@ -183,6 +189,7 @@ On success both the `.part` and the `.state.json` are removed.
 | B47 | Shut down when done (checkbox) | Implemented (N6) |
 | B48 | Network... dialog (proxy, bypass, IPv4 preference, test) | Implemented (N7) |
 | B49 | Mirrors... dialog for the selected job | Implemented (N7) |
+| B50 | Confirmation before opening an executable/script | Implemented (security) |
 
 Default save folder: `%USERPROFILE%\Downloads`.
 
@@ -247,6 +254,7 @@ results do not depend on third-party sites.
 | **N5 suite: `tests/test_n5.py` (32 tests)** | **Pass** |
 | **N6 suite: `tests/test_n6.py` (36 tests)** | **Pass** |
 | **N7 suite: `tests/test_n7.py` (30 tests)** | **Pass** |
+| **Security suite: `tests/test_security.py` (29 tests)** | **Pass** |
 | **Changelog suite: `tests/test_changelog.py` (11 tests)** | **Pass** |
 | A future start time holds the job in `scheduled` | Pass — released when the time comes |
 | A closed window blocks every start; Start Now overrides it | Pass |

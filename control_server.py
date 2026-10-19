@@ -30,6 +30,31 @@ CONTROL_PORT = 6801
 TOKEN_FILE = "control_token.txt"
 MAX_BODY = 1 << 20                 # 1 MiB is plenty for a job payload
 
+#: Only these origins may talk to the control server. The extension is a
+#: browser extension, so its origin is `chrome-extension://<id>` (Chrome,
+#: Edge) or `moz-extension://<id>` (Firefox). Ordinary web pages are NOT
+#: allowed: a site must not be able to reach into the app on localhost.
+ALLOWED_ORIGIN_PREFIXES = ("chrome-extension://", "moz-extension://",
+                           "safari-web-extension://")
+
+#: Host names the server answers to. A request addressed to any other name
+#: (a DNS-rebinding attempt) is refused.
+ALLOWED_HOSTS = ("127.0.0.1", "localhost", "::1")
+
+
+def _host_allowed(host_header: str | None) -> bool:
+    """True when the Host header names the loopback interface."""
+    if not host_header:
+        return False
+    host = host_header.strip().lower()
+    if host.startswith("["):            # [::1]:6801
+        host = host[1:].split("]", 1)[0]
+    elif host.count(":") > 1:           # a bare IPv6 address, e.g. ::1
+        pass
+    else:
+        host = host.split(":", 1)[0]    # 127.0.0.1:6801
+    return host in ALLOWED_HOSTS
+
 
 def token_path() -> str:
     return os.path.join(app_data_dir(), TOKEN_FILE)
@@ -103,6 +128,12 @@ def _normalise(payload: dict) -> dict:
     if filename is not None:
         filename = str(filename).strip() or None
 
+    # The destination must be a folder that really exists; a payload cannot
+    # point a download at an arbitrary path.
+    dest_dir = str(payload.get("dest_dir") or "").strip()
+    if dest_dir and not os.path.isdir(dest_dir):
+        dest_dir = None
+
     return {
         "url": url,
         "cookies": cookies,
@@ -111,7 +142,7 @@ def _normalise(payload: dict) -> dict:
         "filename": filename,
         "threads": max(1, min(threads, 32)) if threads else None,
         "headers": headers,
-        "dest_dir": str(payload.get("dest_dir") or "") or None,
+        "dest_dir": dest_dir or None,
     }
 
 
@@ -141,13 +172,33 @@ class ControlServer:
                 return
 
             # -- helpers ---------------------------------------------------
+            def _origin_allowed(self) -> bool:
+                """True for a browser extension origin, false for a web page."""
+                origin = (self.headers.get("Origin") or "").strip().lower()
+                return origin.startswith(ALLOWED_ORIGIN_PREFIXES)
+
             def _cors(self) -> None:
-                self.send_header("Access-Control-Allow-Origin", "*")
+                """CORS headers for the extension only.
+
+                A normal web page must not be able to read anything from
+                this server, so the headers are only sent for an extension
+                origin. The extension itself does not need CORS: an MV3
+                service worker with `host_permissions` may talk to loopback
+                directly."""
+                if not self._origin_allowed():
+                    return
+                self.send_header("Access-Control-Allow-Origin",
+                                 self.headers.get("Origin"))
+                self.send_header("Vary", "Origin")
                 self.send_header(
                     "Access-Control-Allow-Headers",
                     "Content-Type, Authorization, X-FreeDM-Token")
                 self.send_header(
                     "Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+
+            def _host_ok(self) -> bool:
+                """Refuse a request addressed to a name other than loopback."""
+                return _host_allowed(self.headers.get("Host"))
 
             def _json(self, code: int, obj: dict) -> None:
                 body = json.dumps(obj).encode("utf-8")
@@ -194,12 +245,18 @@ class ControlServer:
 
             # -- verbs -----------------------------------------------------
             def do_OPTIONS(self) -> None:  # noqa: N802
+                if not self._host_ok():
+                    self._json(403, {"ok": False, "error": "forbidden"})
+                    return
                 self.send_response(204)
                 self._cors()
                 self.send_header("Content-Length", "0")
                 self.end_headers()
 
             def do_GET(self) -> None:  # noqa: N802
+                if not self._host_ok():
+                    self._json(403, {"ok": False, "error": "forbidden"})
+                    return
                 path = self.path.split("?", 1)[0]
                 if path in ("/ping", "/health"):
                     self._json(200, {
@@ -212,6 +269,10 @@ class ControlServer:
                 self._json(404, {"ok": False, "error": "not found"})
 
             def do_POST(self) -> None:  # noqa: N802
+                if not self._host_ok():
+                    self._drain()
+                    self._json(403, {"ok": False, "error": "forbidden"})
+                    return
                 path = self.path.split("?", 1)[0]
                 if path != "/add":
                     self._drain()
@@ -244,8 +305,9 @@ class ControlServer:
                     return
                 try:
                     job_id = control.on_add(job)
-                except Exception as exc:       # noqa: BLE001
-                    self._json(500, {"ok": False, "error": str(exc)})
+                except Exception:       # noqa: BLE001
+                    # Never leak an internal error message to the client.
+                    self._json(500, {"ok": False, "error": "internal error"})
                     return
                 self._json(200, {"ok": True, "id": job_id})
 

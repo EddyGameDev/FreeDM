@@ -296,8 +296,9 @@ class Download:
         self.session.mount("https://", adapter)
         # N7: the shared proxy configuration applies to every request.
         self.session.proxies = PROXY.proxies()
-        self._apply_cookies(cookies)
         self.final_url: str = self.url
+        self._apply_cookies(cookies)
+        self._apply_cookie_header()
 
         # N7: alternative sources for the same file (mirror base URLs).
         self.mirrors: list[str] = []
@@ -565,7 +566,11 @@ class Download:
         self._preallocate()
 
     def _session_headers(self) -> dict:
-        return dict(self.headers)
+        # The cookie is carried by the jar, not as a raw header: a raw
+        # `Cookie` header is dropped on every redirect and would be sent to
+        # any host the session talks to.
+        return {name: value for name, value in self.headers.items()
+                if name.lower() != "cookie"}
 
     # -- N7: proxy and mirrors ---------------------------------------------
     def _proxies_for(self, url: str) -> dict | None:
@@ -689,6 +694,50 @@ class Download:
                     # rather than aborting the whole download.
                     continue
 
+    def _apply_cookie_header(self) -> None:
+        """Move a hand-written ``Cookie:`` header into the cookie jar.
+
+        ``requests`` drops a raw ``Cookie`` header whenever it follows a
+        redirect, and a session-level header is sent to *every* host the
+        session talks to. Putting the value in the jar instead means it
+        survives redirects to the same host and is never sent anywhere else.
+
+        The header itself stays in ``self.headers`` so it is still saved with
+        the job and restored on the next start; it is only kept out of the
+        raw request headers."""
+        raw = None
+        for name, value in self.headers.items():
+            if name.lower() == "cookie":
+                raw = value
+                break
+        if not raw:
+            return
+        # The session must not send it raw.
+        for name in list(self.session.headers):
+            if name.lower() == "cookie":
+                self.session.headers.pop(name, None)
+        jar = {}
+        for part in str(raw).split(";"):
+            if "=" in part:
+                key, value = part.split("=", 1)
+                key, value = key.strip(), value.strip()
+                if key:
+                    jar[key] = value
+        if not jar:
+            return
+        try:
+            host = urlparse(self.final_url or self.url).hostname or ""
+        except ValueError:
+            host = ""
+        if not host:
+            return
+        for key, value in jar.items():
+            try:
+                self.session.cookies.set(
+                    key, value, domain=host, path="/")
+            except (AttributeError, ValueError):
+                continue
+
     def apply_record(self, record: dict) -> None:
         """Restore queue metadata loaded from a JobStore.
 
@@ -732,6 +781,9 @@ class Download:
         if isinstance(headers, dict) and headers:
             self.headers.update(headers)
             self.session.headers.update(self.headers)
+            # The restored header set may carry a Cookie again: put it back
+            # into the jar and keep it out of the raw request headers.
+            self._apply_cookie_header()
         if self.dest_dir and self.filename:
             self.path = os.path.join(self.dest_dir, self.filename)
             self.part_path = self.path + ".part"

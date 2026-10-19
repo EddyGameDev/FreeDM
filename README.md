@@ -215,6 +215,24 @@ FreeDM/
 └── build/                 # PyInstaller intermediate files
 ```
 
+## Security
+
+FreeDM was reviewed for security on 2026-10-19; the findings and the fixes
+are in [`docs/SECURITY.md`](docs/SECURITY.md). The short version:
+
+- The control server listens on `127.0.0.1` only, requires a 256-bit token
+  for every state-changing request, rejects a `Host` header that is not
+  loopback, and gives **no CORS permission to ordinary web pages** — only to
+  the browser extension.
+- The extension keeps the token in `chrome.storage.local`, so it never leaves
+  the device, and asks only for the permissions it uses.
+- A hand-written `Cookie:` header is kept in the cookie jar, so it is scoped
+  to the host it belongs to and survives a redirect.
+- Opening a downloaded executable or script always asks first.
+- The queue database, the control token and the proxy password are stored in
+  plain text under `%APPDATA%\FreeDM`. On a shared Windows account, other
+  users of that account can read them.
+
 ## Changelog and release notes
 
 [`CHANGELOG.md`](CHANGELOG.md) is the single source of truth for the patch

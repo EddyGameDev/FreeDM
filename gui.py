@@ -44,6 +44,13 @@ from control_server import ControlServer, export_extension, token_path
 
 APP_NAME = "FreeDM - Free Download Manager"
 
+#: Files that can run code. Opening one always asks for confirmation.
+EXECUTABLE_EXTENSIONS = frozenset({
+    ".exe", ".bat", ".cmd", ".com", ".scr", ".pif", ".msi", ".msp", ".msc",
+    ".ps1", ".psm1", ".psd1", ".vbs", ".vbe", ".js", ".jse", ".wsf", ".wsh",
+    ".jar", ".lnk", ".reg", ".hta", ".cpl",
+})
+
 
 class App:
     def __init__(self, root: tk.Tk, store: JobStore | None = None):
@@ -1403,6 +1410,14 @@ class App:
     def open_file(self) -> None:
         for dl in self._selected():
             if dl.status == DONE and dl.path and os.path.exists(dl.path):
+                # Security: never launch an executable or a script without
+                # asking - a download manager handles dangerous files.
+                if os.path.splitext(dl.path)[1].lower() in EXECUTABLE_EXTENSIONS:
+                    if not messagebox.askyesno(
+                            APP_NAME,
+                            f"This file can run code:\n\n{dl.path}\n\n"
+                            "Open it anyway?"):
+                        return
                 self._open(dl.path)
                 return
         # N5: the file is gone (or still downloading) - show where it was.

@@ -89,6 +89,50 @@ First public build.
 - The windowed build has no console, so CLI progress is silent in the
   packaged app.
 
+## [v1.2.1] - 2026-10-19
+
+Security review and fixes. No behaviour changes for normal use.
+
+### Build
+
+- `FreeDM-1.2.1.exe` - Windows x64, single file, no installer (17.5 MB).
+- SHA-256: `1b3f89d88885781abe054ba95be7e3eb7c53be02b384b345cc7728be17b002ca`
+- Verify with: `certutil -hashfile FreeDM-1.2.1.exe SHA256`
+- Source: <https://github.com/EddyGameDev/FreeDM>
+
+### Fixed
+
+- **The control token stays on the device.** The browser extension stored it
+  in `chrome.storage.sync`, which uploads it to the Google account and to
+  every other browser signed in to it. It now uses `chrome.storage.local`.
+  *After updating the extension, paste the token again.*
+- **A web page can no longer talk to the control server.** The server sent
+  `Access-Control-Allow-Origin: *`, so any site could read its answers and
+  tell whether FreeDM was running. The CORS headers are now only sent for a
+  browser-extension origin.
+- **The control server only answers for loopback.** A request with a `Host`
+  header naming another host (a DNS-rebinding attempt) is refused.
+- **The extension no longer asks for the `webRequest` permission**, which it
+  never used.
+- **A `Cookie:` header set by hand is no longer lost on a redirect.** It is
+  put into the cookie jar instead, so it survives a redirect *and* is only sent
+  to the host it belongs to.
+- **Opening a downloaded executable or script asks first**, instead of
+  launching it with one click.
+- The control server no longer returns internal error messages to the client,
+  and a `dest_dir` from the extension is ignored unless it is a real folder.
+
+### Known limitations
+
+- The queue database, the control token and the proxy password are stored in
+  plain text under `%APPDATA%\FreeDM`. On a shared Windows account, other
+  users of that account can read them.
+
+### Notes
+
+- The full review, including what was checked and found safe, is in
+  `docs/SECURITY.md`. The findings are pinned by `tests/test_security.py`.
+
 ## [v1.2.0] - 2026-10-19
 
 Network options: proxy support, an IPv4/IPv6 preference and mirror sources.
