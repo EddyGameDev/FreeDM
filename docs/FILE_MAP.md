@@ -23,7 +23,10 @@ F:\OMNI Config\Plan\FreeDM\
 │   └── FreeDM.exe              # BUILT APPLICATION (double-click to run)
 ├── LICENSE                     # PolyForm Noncommercial 1.0.0 (full text)
 ├── NOTICE                      # copyright notice / Required Notice line
+├── CHANGELOG.md                # per-build patch notes (source of truth)
 ├── .gitignore                  # build artefacts, caches, partial downloads
+├── scripts\
+│   └── release_notes.py        # extract a version's notes from CHANGELOG.md
 ├── docs\
 │   ├── OVERVIEW.md             # what it is, scope, how it works
 │   ├── FEATURES.md             # every feature + status + location
@@ -44,6 +47,8 @@ F:\OMNI Config\Plan\FreeDM\
 │   ├── test_n3.py              # N3 suite: size/checksum verification, cleanup
 │   ├── test_n4.py              # N4 suite: dynamic pieces, global limit
 │   ├── test_n5.py              # N5 suite: categories, filter, export/import
+│   ├── test_n6.py              # N6 suite: scheduling, window, shut-down
+│   ├── test_changelog.py       # release-notes tooling
 │   ├── gui_testcase.py        # shared GUI test base (temp folder, no downloads)
 │   └── test_w1.py              # W1 suite: control server, token, payload
 ├── engine.py                   # download engine (the core)
@@ -241,12 +246,37 @@ abandoned partial downloads.
 | `find_orphans(folder, min_age_days)` | abandoned partials older than the given age (`<= 0` disables the scan) |
 | `cleanup_orphans(paths)` | delete them → `(deleted, failed)` |
 
-### `categories.py` — categories, filtering, export/import (N5)
-Headless helpers for organising the queue. All the rules are plain text so
-they can be edited by the user and stored in the settings table.
+### `automation.py` — scheduling, window, shut-down (N6)
+Headless helpers for the automation features: what a time string means, when
+a job may start, and how to power the machine down.
 
 | Symbol | Purpose |
 |---|---|
+| `parse_time(text)` / `format_time(minutes)` | `"02:30"` ⇄ minutes after midnight (`None` when unparseable) |
+| `in_window(now, start, end)` | is the moment inside the daily window? (may wrap past midnight; an unset side means "no limit") |
+| `seconds_until_minutes(now, minutes)` | countdown to the next occurrence of a time of day |
+| `seconds_until_epoch(target, now)` | countdown to a Unix timestamp (0 when unset/past) |
+| `next_window_opens(now, start, end)` | seconds until the window opens (0 when it is open) |
+| `describe_schedule(start_at)` | short human description of a job's start time |
+| `shutdown_command(mode, delay)` | the OS command for `shutdown` / `sleep`; `None` if unsupported |
+| `SHUTDOWN` / `SLEEP` | the two power modes |
+
+### `CHANGELOG.md` and `scripts/release_notes.py`
+`CHANGELOG.md` is the single source of truth for the patch notes of every
+build. `scripts/release_notes.py` extracts one version's section, so the
+notes on the GitHub release page always match the code:
+
+```
+python scripts/release_notes.py --list
+python scripts/release_notes.py v1.1.0
+python scripts/release_notes.py v1.1.0 --file notes.md
+```
+
+### `categories.py` — categories, filtering, export/import (N5)
+Headless helpers for organising the queue. All the rules are plain text
+so they can be edited by the user and stored in the settings table.
+
+| Symbol | Purpose |
 | `DEFAULT_CATEGORIES` | the shipped categories (Video, Music, Documents, Archives, Programs, Other) |
 | `default_rules()` / `format_rules()` / `parse_rules()` | the editable rule text; `parse_rules` returns `(rules, errors)` |
 | `load_rules(text)` | the user's rules, falling back to the defaults when unusable |

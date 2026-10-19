@@ -55,6 +55,12 @@ their type (Video, Music, Documents, Archives, Programs, Other). Click
 **Categories...** to edit the rules. **Export...** writes the queue to a file
 and **Import...** reads it back (a plain list of URLs also works).
 
+**Schedule...** picks a date and time for the selected jobs: they wait until
+then and the schedule survives a restart. The **Window:** control in the filter
+bar limits downloads to certain hours of the day (e.g. `01:00` – `06:00`; it
+may run past midnight). **Shut down when done** powers the machine off once
+every job has finished — it always asks first.
+
 **Limit...** sets a live speed cap (in KB/s; `0` or empty = unlimited) on the
 selected downloads and remembers it as the default for new downloads.
 **Global Limit...** caps the *combined* speed of every download — useful on a
@@ -165,6 +171,7 @@ below if you want live CLI progress.)
 FreeDM/
 ├── LICENSE                 # PolyForm Noncommercial 1.0.0 (full text)
 ├── NOTICE                  # copyright notice / Required Notice line
+├── CHANGELOG.md            # per-build patch notes (source of truth)
 ├── .gitignore              # build artefacts, caches, partial downloads
 ├── engine.py              # download engine (segments, resume, retry, limits)
 ├── store.py               # SQLite queue (jobs, segments, settings)
@@ -172,6 +179,7 @@ FreeDM/
 ├── batch.py               # batch URL parsing + clipboard link detection
 ├── verify.py              # size/checksum verification + orphan cleanup
 ├── categories.py          # categories, list filter, queue export/import
+├── automation.py          # scheduled starts, daily window, shut-down
 ├── scheduler.py           # active/connection/host caps + FIFO queue
 ├── control_server.py      # loopback browser-handoff endpoint (token auth)
 ├── extension/             # MV3 browser extension (Chrome/Edge)
@@ -192,10 +200,29 @@ FreeDM/
 │   ├── test_n3.py         # N3 verification/cleanup tests
 │   ├── test_n4.py         # N4 dynamic segmentation/global limit tests
 │   ├── test_n5.py         # N5 categories/filter/export-import tests
+│   ├── test_n6.py         # N6 scheduling/window/shut-down tests
+│   ├── test_changelog.py  # release-notes tooling tests
 │   └── gui_testcase.py    # shared GUI test base (temp folder, no downloads)
 ├── dist/FreeDM.exe        # the built application
 └── build/                 # PyInstaller intermediate files
 ```
+
+## Changelog and release notes
+
+[`CHANGELOG.md`](CHANGELOG.md) is the single source of truth for the patch
+notes of every build. Each release has its own section listing the **build**
+(file name, size, SHA-256) followed by what was added, changed and fixed.
+
+To get the notes for a release:
+
+```
+python scripts\release_notes.py --list
+python scripts\release_notes.py v1.1.0
+python scripts\release_notes.py v1.1.0 --file notes.md
+```
+
+The same text is used for the GitHub release page, so the notes there always
+match the shipped binary.
 
 ## Rebuilding the exe
 
@@ -220,6 +247,8 @@ python tests\test_n2.py
 python tests\test_n3.py
 python tests\test_n4.py
 python tests\test_n5.py
+python tests\test_n6.py
+python tests\test_changelog.py
 ```
 
 For a manual download, start the Range-capable test server and run:
@@ -277,9 +306,9 @@ Review this table before publishing a new build.
 - Queue metadata is stored in plain text in `%APPDATA%\FreeDM\freedm.db`;
   cookies passed via the API are not persisted across restarts.
 - Connection budgets are assigned when a job starts (static thread count), not
-  rebalanced while it runs. There is no timed/scheduled start yet.
-- Speed limits are per download; there is no shared cap across all active
-  downloads and no time-of-day bandwidth schedule.
+  rebalanced while it runs.
+- Speed limits are per download; **Global Limit...** caps the combined speed
+  of all downloads, but there is no time-of-day bandwidth schedule.
 - Browser handoff is Chrome/Edge only; the token is pasted once into the
   extension options, incognito downloads stay in the browser, and the app is not
   auto-launched from the browser.

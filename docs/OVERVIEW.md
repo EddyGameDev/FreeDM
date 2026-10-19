@@ -50,6 +50,8 @@ crashes without losing progress.
   (off by default).
 - Organisation: categories with editable rules and an auto-sort toggle, a
   search box + status filter for the list, and queue export/import.
+- Automation: a scheduled start per job, a daily window in which downloads
+  may start, and an optional shut-down when the queue drains.
 - A simple CLI and a headless `--selftest` mode.
 - A single-file distributable: `dist\FreeDM.exe`.
 

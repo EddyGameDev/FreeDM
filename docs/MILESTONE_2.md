@@ -1,6 +1,6 @@
 # FreeDM — Milestone 2: Everyday polish → engine strength
 
-**Status:** started 2026-10-19 · **N1–N5 done** · next: **N6** · Companion to
+**Status:** started 2026-10-19 · **N1–N6 done** · next: **N7** · Companion to
 [`NEXT_GOAL.md`](NEXT_GOAL.md) (Milestone 1 — **complete**) and
 [`ROADMAP.md`](ROADMAP.md) (full backlog).
 
@@ -30,7 +30,7 @@ without re-analysing the code.
 | 2026-10-19 | **N3 — Integrity & verification** | **DONE.** New `verify.py` (checksum parsing/hashing, size check, orphan scan/cleanup). Engine: `checksum=` option, `VerificationError`, size check before finalize, `verify_now()`/`set_checksum()`, `checksum`/`checksum_result` DB columns (auto-migrated). GUI: **Checksum...** dialog, **Clean Up...** for abandoned `.part` files, checksum shown in **Details...**. Also fixed a real control-server race (403 before reading the request body → WinError 10053) found by a flaky W1 test. 34/34 N3 tests, W1 14/14. |
 | 2026-10-19 | **N4 — Dynamic segmentation** | **DONE.** Work-queue engine: workers take the largest pending piece and split it, so a slow connection can only hold back a small piece. Adaptive piece sizing follows the *slowest* recent connection (1 MB – 8 MB). New **Global Limit...** caps the combined throughput of all downloads. Resume now validates that the stored pieces tile the file exactly. `engine.DYNAMIC_SPLITTING` is the master switch. 24/24 tests. Rebuilt exe verified (frozen `--selftest` PASS). |
 | 2026-10-19 | **N5 — Organization & history** | **DONE.** New `categories.py` (categories, rules parser, filter, queue export/import). GUI: search box + status filter that hides non-matching rows live, **Sort into category folders** toggle with an editable **Categories...** dialog, **Export...**/**Import...** of the queue, **Show in Folder** (reveal in Explorer) and a friendlier **Open File** fallback. Engine: `dest_resolver` hook so the category folder is chosen from the *real* file name after the probe. 32/32 tests. Rebuilt exe verified (frozen `--selftest` PASS). |
-| next | N6 — Automation | Not started |
+| 2026-10-19 | **N6 — Automation** | **DONE.** New `automation.py` (time/window helpers). Engine: `SCHEDULED` status + `start_at` (persisted, auto-migrated). Scheduler: holds jobs until their time, honours a daily window (may wrap past midnight), and "Start Now" overrides both. GUI: **Schedule...** dialog, a **Window** control in the filter bar, **Shut down when done** (confirmation-guarded). 36/36 tests. Also added `CHANGELOG.md` + `scripts/release_notes.py` so every build ships its own patch notes. |
 | next | N7 — Network options | Not started |
 | next | N8 — Browser extras | Not started |
 | next | N9 — Packaging & quality | Not started |
@@ -47,7 +47,7 @@ without re-analysing the code.
 | N3 | Integrity & verification | P5.3, P5.10, debt #3 | S | **DONE** |
 | N4 | Dynamic segmentation | P5.1, P5.2, debt #4 | M | **DONE** |
 | N5 | Organization & history | P1.2, P3.2, P3.3, P3.4 | M | **DONE** |
-| N6 | Automation | P2.1, P2.2, P2.3 | M | Not started |
+| N6 | Automation | P2.1, P2.2, P2.3 | M | **DONE** |
 | N7 | Network options | P5.5, P5.8, P5.4 | M | Not started |
 | N8 | Browser extras | P4.2, P4.5, P4.3 | M | Not started |
 | N9 | Packaging & quality | P0.6, P0.7, P0.8, P7.1, P7.4, P7.5, P7.6, P7.8 | M | Not started |
@@ -269,16 +269,48 @@ export/import round-trip and the new actions).
 
 ---
 
-## N6 — Automation
+## N6 — Automation ✅ DONE
 
-**Build:** scheduled start per item (`P2.1`), allowed download windows
-(e.g. 01:00–06:00, `P2.2`), and shut down / sleep when the queue drains
-(`P2.3`, confirmation-guarded). Scheduled jobs persist through restarts.
+**Why:** a download manager that keeps working at 3 a.m. is a nuisance, and a
+big file that should wait for a cheap night-time window cannot do that on its
+own.
 
-**Acceptance criteria:**
-- A job scheduled for the future stays queued until its time, then runs.
-- Outside the allowed window jobs wait; inside they resume.
-- "Shut down when done" runs only after a confirmation and only when idle.
+**What shipped:**
+- New `automation.py` (headless): `parse_time`/`format_time` (`"02:30"`),
+  `in_window` (the window may wrap past midnight), `seconds_until_minutes`,
+  `seconds_until_epoch`, `next_window_opens` and `shutdown_command`.
+- **Scheduled start** per job: the new **Schedule...** button picks a date and
+  time for the selected jobs. A job with a future start time waits in the new
+  `scheduled` state and joins the queue when its moment comes. The time is
+  stored in the database (`start_at`), so a scheduled job survives a restart
+  and is re-armed on launch — even when auto-resume is off, because the user
+  asked for that time.
+- **Daily download window**: a `Window:` control in the filter bar
+  (`01:00` – `06:00`). While the window is closed, *nothing* starts; the
+  queue simply waits. An empty or zero-length window means "no limit". The
+  window may wrap past midnight (e.g. `23:00` – `06:00`).
+- **Shut down when done**: a checkbox in the filter bar. When the queue is
+  *really* empty (nothing running, queued, scheduled or paused), FreeDM asks
+  for confirmation and then powers the machine down — or puts it to sleep.
+  Declining turns the option off rather than asking again every 500 ms.
+- **Start Now** overrides both the schedule and the window: an explicit
+  request from the user always wins.
+- The list shows a `scheduled` status with the time the job will start.
+
+**Acceptance criteria:** all met.
+- A job scheduled for the future stays queued until its time, then runs. ✅
+- Outside the allowed window jobs wait; inside they resume. ✅
+- "Shut down when done" runs only after a confirmation and only when idle. ✅
+
+**Tests:** `tests/test_n6.py` — 36/36 pass (time parsing, window logic
+including the midnight wrap, countdowns, the shutdown command, the scheduler
+holding and releasing scheduled jobs, the window blocking and allowing jobs,
+Start Now overriding both, `start_at` persistence, the DB migration, the new
+settings, and 9 real-GUI tests).
+
+**Also in this milestone:** `CHANGELOG.md` — the single source of truth for
+every build's patch notes — plus `scripts/release_notes.py`, which extracts a
+version's section so the GitHub release page always matches the code.
 
 ---
 

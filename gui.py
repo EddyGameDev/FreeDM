@@ -6,6 +6,8 @@ import os
 import queue
 import subprocess
 import sys
+import datetime
+import time
 import tkinter as tk
 from tkinter import filedialog, messagebox, simpledialog, ttk
 from urllib.parse import urlparse
@@ -23,12 +25,15 @@ from engine import (
     PROBING,
     IDLE,
     QUEUED,
+    SCHEDULED,
     set_global_speed_limit,
     global_speed_limit,
 )
 from store import JobStore
 from settings import load as load_settings, save as save_settings
 from batch import parse_urls, find_url
+from automation import (parse_time, format_time, in_window, describe_schedule,
+                        seconds_until_epoch, shutdown_command, SHUTDOWN, SLEEP)
 from categories import (default_rules, format_rules, load_rules, parse_rules,
                         classify, destination_for, matches_filter,
                         export_queue, import_queue, STATUS_FILTERS)
@@ -75,10 +80,18 @@ class App:
         self.filter_status = tk.StringVar(
             value=self.prefs.get("filter_status") or "(all)")
         self._visible: set[str] = set()      # iids currently shown in the tree
+        # N6: scheduled starts, the daily window and shut-down-when-done.
+        self.window_start = parse_time(self.prefs.get("window_start") or "")
+        self.window_end = parse_time(self.prefs.get("window_end") or "")
+        self.shutdown_when_done = bool(self.prefs.get("shutdown_when_done"))
+        self.shutdown_mode = (self.prefs.get("shutdown_mode") or SHUTDOWN)
+        self._shutdown_armed = False         # asked the user already?
+        self.shutdown_var = tk.BooleanVar(value=self.shutdown_when_done)
         self.scheduler = Scheduler(
             int(self.prefs["max_active"]),
             int(self.prefs["max_connections"]),
             int(self.prefs["max_per_host"]))
+        self.scheduler.set_window(self.window_start, self.window_end)
 
         # W1: browser handoff via a token-protected localhost server.
         self.control: ControlServer | None = None
@@ -179,6 +192,22 @@ class App:
                         command=self._toggle_auto_sort).pack(side="left")
         ttk.Button(bar, text="Categories...", command=self.categories_dialog
                    ).pack(side="left", padx=(10, 0))
+        ttk.Separator(bar, orient="vertical").pack(side="left", fill="y", padx=10)
+        ttk.Label(bar, text="Window:").pack(side="left")
+        self.window_start_var = tk.StringVar(
+            value=format_time(self.window_start))
+        ttk.Entry(bar, textvariable=self.window_start_var, width=6
+                  ).pack(side="left", padx=(4, 2))
+        ttk.Label(bar, text="-").pack(side="left")
+        self.window_end_var = tk.StringVar(
+            value=format_time(self.window_end))
+        ttk.Entry(bar, textvariable=self.window_end_var, width=6
+                  ).pack(side="left", padx=(2, 8))
+        ttk.Button(bar, text="Apply", command=self._apply_window
+                   ).pack(side="left")
+        ttk.Checkbutton(bar, text="Shut down when done",
+                        variable=self.shutdown_var,
+                        command=self._toggle_shutdown).pack(side="left", padx=(10, 0))
 
     # -- N5: filtering, categories, import/export ---------------------------
     def _status_filter(self) -> str:
@@ -369,6 +398,145 @@ class App:
                 self._open(folder)
                 return
 
+    # -- N6: scheduling, window, shut-down ---------------------------------
+    def schedule_dialog(self) -> None:
+        """Set the start time of the selected job(s)."""
+        selection = self._selected()
+        if not selection:
+            messagebox.showinfo(APP_NAME, "Select a download first.")
+            return
+        win = tk.Toplevel(self.root)
+        win.title("Schedule download")
+        win.geometry("480x260")
+        win.transient(self.root)
+        pad = {"padx": 12, "pady": 6}
+
+        ttk.Label(
+            win,
+            text=("Choose when the selected job(s) should start.\n"
+                  "A time in the future keeps them waiting; the schedule is\n"
+                  "saved, so it survives a restart."),
+            justify="left",
+        ).pack(anchor="w", **pad)
+
+        row = ttk.Frame(win)
+        row.pack(fill="x", padx=12)
+        ttk.Label(row, text="Date:").pack(side="left")
+        now = datetime.datetime.now()
+        date_var = tk.StringVar(value=now.strftime("%Y-%m-%d"))
+        ttk.Entry(row, textvariable=date_var, width=14).pack(
+            side="left", padx=(4, 12))
+        ttk.Label(row, text="Time:").pack(side="left")
+        time_var = tk.StringVar(value=now.strftime("%H:%M"))
+        ttk.Entry(row, textvariable=time_var, width=8).pack(side="left", padx=(4, 0))
+
+        info = ttk.Label(win, text="", foreground="#a00")
+        info.pack(anchor="w", padx=12)
+
+        btns = ttk.Frame(win, padding=(12, 6, 12, 12))
+        btns.pack(fill="x")
+
+        def apply(when: float | None) -> None:
+            for dl in selection:
+                dl.set_start_at(when)
+                if when is None:
+                    dl.status = QUEUED
+                self.scheduler.submit(dl)
+            win.destroy()
+            if when is None:
+                self.status_var.set(
+                    f"Schedule cleared for {len(selection)} job(s)")
+            else:
+                self.status_var.set(
+                    f"{len(selection)} job(s) scheduled for "
+                    + datetime.datetime.fromtimestamp(when).strftime("%d %b %H:%M"))
+
+        def apply_typed() -> None:
+            try:
+                date = datetime.datetime.strptime(
+                    date_var.get().strip(), "%Y-%m-%d")
+            except ValueError:
+                info.configure(text="The date must look like 2026-10-19.")
+                return
+            try:
+                clock = datetime.datetime.strptime(
+                    time_var.get().strip(), "%H:%M")
+            except ValueError:
+                info.configure(text="The time must look like 02:30.")
+                return
+            when = date.replace(hour=clock.hour, minute=clock.minute,
+                                second=0, microsecond=0)
+            stamp = when.timestamp()
+            if stamp <= time.time():
+                info.configure(text="That moment is in the past.")
+                return
+            apply(stamp)
+
+        ttk.Button(btns, text="Schedule", command=apply_typed).pack(
+            side="right", padx=(4, 0))
+        ttk.Button(btns, text="Start now", command=lambda: apply(None)).pack(
+            side="right")
+        ttk.Button(btns, text="Cancel", command=win.destroy).pack(side="right")
+
+    def _apply_window(self) -> None:
+        """Set the daily window in which downloads may start."""
+        start = parse_time(self.window_start_var.get())
+        end = parse_time(self.window_end_var.get())
+        raw_start = self.window_start_var.get().strip()
+        raw_end = self.window_end_var.get().strip()
+        if raw_start and start is None:
+            messagebox.showerror(APP_NAME, f"Bad start time: {raw_start!r}")
+            return
+        if raw_end and end is None:
+            messagebox.showerror(APP_NAME, f"Bad end time: {raw_end!r}")
+            return
+        self.window_start = start
+        self.window_end = end
+        self.scheduler.set_window(start, end)
+        save_settings(self.store, window_start=raw_start, window_end=raw_end)
+        self.status_var.set("Download window: " + self.scheduler.window_status())
+
+    def _toggle_shutdown(self) -> None:
+        self.shutdown_when_done = self.shutdown_var.get()
+        save_settings(self.store, shutdown_when_done=self.shutdown_when_done)
+        self._shutdown_armed = False
+        self.status_var.set(
+            "Shut down when done: "
+            + ("on" if self.shutdown_when_done else "off"))
+
+    def _queue_is_empty(self) -> bool:
+        """True when nothing is running, queued, scheduled or waiting."""
+        for dl in self.downloads:
+            if dl.status in (DOWNLOADING, PROBING, QUEUED, SCHEDULED, PAUSED):
+                return False
+        return True
+
+    def _check_shutdown_when_done(self) -> None:
+        """Ask the user, then power off - only when the queue is really empty."""
+        if not self.shutdown_when_done or self._shutdown_armed:
+            return
+        if not self._queue_is_empty():
+            return
+        self._shutdown_armed = True
+        verb = "shut down" if self.shutdown_mode != SLEEP else "sleep"
+        if not messagebox.askyesno(
+                APP_NAME,
+                f"All downloads are finished.\n\nShut the computer {verb} now?",
+                icon="question"):
+            self.shutdown_when_done = False
+            self.shutdown_var.set(False)
+            save_settings(self.store, shutdown_when_done=False)
+            return
+        command = shutdown_command(self.shutdown_mode)
+        if not command:
+            messagebox.showerror(
+                APP_NAME, "This platform has no supported power command.")
+            return
+        try:
+            subprocess.Popen(command)
+        except OSError as exc:
+            messagebox.showerror(APP_NAME, f"Could not {verb}: {exc}")
+
     def _build_tree(self) -> None:
         frame = ttk.Frame(self.root, padding=(8, 4))
         frame.pack(fill="both", expand=True)
@@ -401,6 +569,7 @@ class App:
             ("Resume", self.resume_selected),
             ("Cancel", self.cancel_selected),
             ("Start Now", self.start_now_selected),
+            ("Schedule...", self.schedule_dialog),
             ("Limit...", self.limit_selected),
             ("Global Limit...", self.global_limit_dialog),
             ("Checksum...", self.checksum_dialog),
@@ -942,6 +1111,12 @@ class App:
                 dl.error = record.get("error")
             elif status == CANCELED:
                 dl.status = CANCELED
+            elif status == SCHEDULED or (dl.start_at
+                                         and dl.start_at > time.time()):
+                # N6: a job with a start time waits for it, even when
+                # auto-resume is off - the user asked for that time.
+                dl.status = SCHEDULED
+                self.scheduler.submit(dl)
             elif self.auto_resume_var.get():
                 resumed += 1
                 self.scheduler.submit(dl)
@@ -1137,6 +1312,11 @@ class App:
         except Exception:           # noqa: BLE001 - never break the UI loop
             pass
 
+        try:
+            self._check_shutdown_when_done()
+        except Exception:           # noqa: BLE001 - never break the UI loop
+            pass
+
         active = 0
         queued = 0
         total_speed = 0.0
@@ -1159,6 +1339,8 @@ class App:
             status = s["status"]
             if status == ERROR and s["error"]:
                 status = f"error: {s['error'][:40]}"
+            elif status == SCHEDULED:
+                status = f"scheduled: {describe_schedule(s.get('start_at'))}"
             self.tree.item(iid, values=(s["name"], size, pct, speed, eta, status))
             if s["status"] in (DOWNLOADING, PROBING):
                 active += 1

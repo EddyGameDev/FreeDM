@@ -47,6 +47,11 @@ DEFAULTS: dict[str, str] = {
     "category_rules": "",       # user-edited category rules (blank = default)
     "filter_text": "",          # last used search text
     "filter_status": "",        # last used status filter
+    # N6 additions
+    "window_start": "",         # daily window start, "HH:MM" (blank = no limit)
+    "window_end": "",           # daily window end, "HH:MM"
+    "shutdown_when_done": "0",  # power off when the queue drains
+    "shutdown_mode": "shutdown",  # "shutdown" | "sleep"
 }
 
 #: Keys whose value is an integer.
@@ -54,7 +59,7 @@ _INT_KEYS = frozenset({"max_active", "max_connections", "max_per_host", "threads
                        "cleanup_days"})
 #: Keys whose value is a boolean ("1"/"0").
 _BOOL_KEYS = frozenset({"auto_resume", "control_enabled", "clipboard_monitor",
-                        "auto_sort"})
+                        "auto_sort", "shutdown_when_done"})
 #: Keys whose value is a float.
 _FLOAT_KEYS = frozenset({"speed_limit", "global_speed_limit"})
 

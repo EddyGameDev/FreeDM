@@ -48,6 +48,7 @@ USER_AGENT = (
 # Status values
 IDLE = "idle"
 QUEUED = "queued"
+SCHEDULED = "scheduled"
 PROBING = "probing"
 DOWNLOADING = "downloading"
 PAUSED = "paused"
@@ -320,6 +321,9 @@ class Download:
         self.checksum = (checksum or "").strip()
         self.checksum_result = ""
 
+        # N6: when this job should start (Unix timestamp); 0/None = right away.
+        self.start_at: float | None = None
+
         self.status = IDLE
         self.error: str | None = None
         self.speed = 0.0
@@ -564,6 +568,21 @@ class Download:
             self.status = QUEUED
             self._store_save()
 
+    def mark_scheduled(self) -> None:
+        """Set the 'waiting for its start time' state and persist it."""
+        if self.status != DONE:
+            self.status = SCHEDULED
+            self._store_save()
+
+    def set_start_at(self, when: float | None) -> None:
+        """Set (or clear) the moment this job should start (Unix timestamp).
+
+        A time in the future keeps the job in the ``scheduled`` state; the
+        scheduler starts it when the time comes. The value is persisted so a
+        scheduled job survives a restart."""
+        self.start_at = float(when) if when else None
+        self._store_save()
+
     @staticmethod
     def _parse_retry_after(value: str | None, attempt: int) -> float:
         """Seconds to wait from a Retry-After header (or exponential backoff)."""
@@ -648,6 +667,10 @@ class Download:
         self.downloaded = int(record.get("downloaded") or 0)
         self.checksum = (record.get("checksum") or "").strip()
         self.checksum_result = record.get("checksum_result") or ""
+        try:
+            self.start_at = float(record.get("start_at") or 0) or None
+        except (TypeError, ValueError):
+            self.start_at = None
         self.etag = record.get("etag") or self.etag
         self.last_modified = record.get("last_modified") or self.last_modified
         self.validator = self.etag or self.last_modified
@@ -1436,4 +1459,5 @@ class Download:
             "job_id": self.job_id,
             "pieces": len(self.segments),
             "splits": self.split_count,
+            "start_at": self.start_at,
         }

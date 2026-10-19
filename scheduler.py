@@ -18,7 +18,9 @@ from urllib.parse import urlparse
 
 from engine import (
     Download, DONE, ERROR, CANCELED, PAUSED, PROBING, DOWNLOADING, QUEUED,
+    SCHEDULED,
 )
+from automation import in_window, seconds_until_epoch
 
 DEFAULT_MAX_ACTIVE = 3
 DEFAULT_MAX_CONNECTIONS = 64
@@ -29,7 +31,8 @@ class Scheduler:
     def __init__(self, max_active: int = DEFAULT_MAX_ACTIVE,
                  max_connections: int = DEFAULT_MAX_CONNECTIONS,
                  max_per_host: int = DEFAULT_MAX_PER_HOST,
-                 tick: float = 0.25):
+                 tick: float = 0.25, window_start: int | None = None,
+                 window_end: int | None = None):
         self.max_active = max(1, min(int(max_active), 32))
         self.max_connections = max(1, int(max_connections))
         self.max_per_host = max(1, int(max_per_host))
@@ -39,9 +42,43 @@ class Scheduler:
         self._launched: list[Download] = []
         self._requested: dict[Download, int] = {}
         self._effective: dict[Download, int] = {}
+        # N6: jobs waiting for their start time, and the daily window.
+        self._scheduled: list[Download] = []
+        self._forced: set[int] = set()      # jobs that bypass the window
+        self.window_start = window_start    # minutes after midnight
+        self.window_end = window_end
         self._stop = threading.Event()
         self._thread = threading.Thread(target=self._loop, daemon=True)
         self._thread.start()
+
+    # -- window (N6) -------------------------------------------------------
+    def set_window(self, start: int | None, end: int | None) -> None:
+        """Set the daily window in which downloads may start."""
+        with self._lock:
+            self.window_start = start
+            self.window_end = end
+
+    def window_open(self, now=None) -> bool:
+        """True when downloads are allowed to start right now."""
+        import datetime
+        now = now or datetime.datetime.now()
+        with self._lock:
+            start, end = self.window_start, self.window_end
+        return in_window(now, start, end)
+
+    def window_status(self) -> str:
+        """A short description of the window, for the status bar."""
+        with self._lock:
+            start, end = self.window_start, self.window_end
+        if start is None or end is None or start == end:
+            return "no time limit"
+        from automation import format_time
+        return f"only between {format_time(start)} and {format_time(end)}"
+
+    def _window_allows(self, dl: Download) -> bool:
+        if id(dl) in self._forced:
+            return True
+        return self.window_open()
 
     # -- introspection -----------------------------------------------------
     @staticmethod
@@ -63,18 +100,32 @@ class Scheduler:
 
     # -- queue operations --------------------------------------------------
     def submit(self, dl: Download, action: str = "start") -> None:
-        """Queue a job (FIFO) and start it if a slot is free."""
+        """Queue a job (FIFO) and start it if a slot is free.
+
+        A job with a start time in the future (N6) waits in the ``scheduled``
+        state and joins the queue when its time comes."""
         if dl.status == DONE:
             return
         with self._lock:
             self._requested.setdefault(dl, dl.num_threads)
             if any(j is dl for j, _ in self._queue):
                 return
+            if any(j is dl for j in self._scheduled):
+                return
             if dl.status in (PROBING, DOWNLOADING):
+                return
+            if dl.start_at and seconds_until_epoch(dl.start_at) > 0:
+                dl.mark_scheduled()
+                self._scheduled.append(dl)
                 return
             dl.mark_queued()
             self._queue.append((dl, action))
         self.pump()
+
+    def scheduled(self) -> list[Download]:
+        """Jobs waiting for their start time."""
+        with self._lock:
+            return list(self._scheduled)
 
     def enqueue_resume(self, dl: Download) -> None:
         self.submit(dl, action="resume")
@@ -82,6 +133,7 @@ class Scheduler:
     def pause(self, dl: Download) -> None:
         with self._lock:
             self._queue = [(j, a) for j, a in self._queue if j is not dl]
+            self._scheduled = [j for j in self._scheduled if j is not dl]
             if dl.status == QUEUED:
                 dl.status = PAUSED
                 dl._store_save()
@@ -89,7 +141,7 @@ class Scheduler:
             dl.pause()
 
     def resume(self, dl: Download) -> None:
-        if dl.status in (ERROR, CANCELED):
+        if dl.status in (ERROR, CANCELED, SCHEDULED):
             self.submit(dl, action="start")
         elif dl.status == PAUSED:
             self.submit(dl, action="resume")
@@ -99,24 +151,36 @@ class Scheduler:
     def cancel(self, dl: Download) -> None:
         with self._lock:
             self._queue = [(j, a) for j, a in self._queue if j is not dl]
+            self._scheduled = [j for j in self._scheduled if j is not dl]
         dl.cancel()
 
     def remove(self, dl: Download) -> None:
         """Forget a job entirely (caller decides whether to cancel it)."""
         with self._lock:
             self._queue = [(j, a) for j, a in self._queue if j is not dl]
+            self._scheduled = [j for j in self._scheduled if j is not dl]
+            self._forced.discard(id(dl))
             if dl in self._launched:
                 self._launched.remove(dl)
             self._requested.pop(dl, None)
             self._effective.pop(dl, None)
 
     def start_now(self, dl: Download) -> None:
-        """Move a queued job to the front of the queue."""
+        """Move a queued job to the front of the queue and start it now.
+
+        This ignores the job's start time and the daily window: the user asked
+        for it explicitly."""
         with self._lock:
+            self._scheduled = [j for j in self._scheduled if j is not dl]
+            dl.start_at = None
+            self._forced.add(id(dl))
             for i, (j, action) in enumerate(self._queue):
                 if j is dl:
                     self._queue.insert(0, self._queue.pop(i))
                     break
+            else:
+                dl.mark_queued()
+                self._queue.insert(0, (dl, "start"))
         self.pump()
 
     def move_up(self, dl: Download) -> bool:
@@ -153,7 +217,10 @@ class Scheduler:
                     dl.num_threads = requested
 
     def pump(self) -> None:
-        """Start queued jobs while active/connection/host budgets allow."""
+        """Start queued jobs while active/connection/host budgets allow.
+
+        Nothing starts while the daily window is closed (N6), except jobs the
+        user explicitly started with "Start Now"."""
         launched: list[tuple[Download, str]] = []
         with self._lock:
             self._reap()
@@ -171,6 +238,8 @@ class Scheduler:
                     break
                 if total >= self.max_connections:
                     break
+                if not self._window_allows(dl):
+                    break                     # the window is closed
                 host = self._host(dl)
                 host_budget = self.max_per_host - hosts.get(host, 0)
                 if host_budget <= 0:
@@ -191,9 +260,25 @@ class Scheduler:
             else:
                 dl.start()
 
+    def _promote_scheduled(self) -> None:
+        """Move jobs whose start time has come into the normal queue (N6)."""
+        now = time.time()
+        with self._lock:
+            for dl in list(self._scheduled):
+                if dl.status in (DONE, ERROR, CANCELED):
+                    self._scheduled.remove(dl)
+                    continue
+                if dl.start_at and dl.start_at > now:
+                    continue
+                self._scheduled.remove(dl)
+                dl.start_at = None
+                dl.mark_queued()
+                self._queue.append((dl, "start"))
+
     def _loop(self) -> None:
         while not self._stop.is_set():
             try:
+                self._promote_scheduled()
                 self.pump()
             except Exception:       # noqa: BLE001 - keep the scheduler alive
                 pass

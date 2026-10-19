@@ -87,6 +87,11 @@ limited. **Planned** = not yet built (see `ROADMAP.md`).
 | A76 | Live list filter by name / URL / host / status | Implemented (N5) | `categories.py` → `matches_filter`; `gui.py` → `_apply_filter` |
 | A77 | Queue export / import (JSON, or a plain list of URLs) | Implemented (N5) | `categories.py` → `export_queue`, `import_queue` |
 | A78 | Reveal the file in Explorer ("Show in Folder") | Implemented (N5) | `gui.py` → `show_in_folder` |
+| A79 | Scheduled start per job (persisted, survives a restart) | Implemented (N6) | `engine.py` → `set_start_at`, `SCHEDULED`; `scheduler.py` → `_promote_scheduled` |
+| A80 | Daily download window (may wrap past midnight) | Implemented (N6) | `automation.py` → `in_window`; `scheduler.py` → `set_window` |
+| A81 | Shut down / sleep when the queue drains (confirmation-guarded) | Implemented (N6) | `gui.py` → `_check_shutdown_when_done`; `automation.py` → `shutdown_command` |
+| A82 | Start Now overrides the schedule and the window | Implemented (N6) | `scheduler.py` → `start_now` |
+| A83 | Changelog-driven release notes per build | Implemented (N6) | `CHANGELOG.md`; `scripts/release_notes.py` |
 
 ### Segment sizing rules (`engine.py`)
 - Files ≤ `MIN_SEGMENT_SIZE` (1 MB) are downloaded as a single stream.
@@ -168,6 +173,9 @@ On success both the `.part` and the `.state.json` are removed.
 | B42 | Categories... editor with validation | Implemented (N5) |
 | B43 | Export... / Import... the queue | Implemented (N5) |
 | B44 | Show in Folder (reveal in Explorer) | Implemented (N5) |
+| B45 | Schedule... (date + time for the selected jobs) | Implemented (N6) |
+| B46 | Daily window control (start/end) in the filter bar | Implemented (N6) |
+| B47 | Shut down when done (checkbox) | Implemented (N6) |
 
 Default save folder: `%USERPROFILE%\Downloads`.
 
@@ -230,6 +238,14 @@ results do not depend on third-party sites.
 | **N3 suite: `tests/test_n3.py` (34 tests)** | **Pass** |
 | **N4 suite: `tests/test_n4.py` (24 tests)** | **Pass** |
 | **N5 suite: `tests/test_n5.py` (32 tests)** | **Pass** |
+| **N6 suite: `tests/test_n6.py` (36 tests)** | **Pass** |
+| **Changelog suite: `tests/test_changelog.py` (11 tests)** | **Pass** |
+| A future start time holds the job in `scheduled` | Pass — released when the time comes |
+| A closed window blocks every start; Start Now overrides it | Pass |
+| A window of 23:00–06:00 wraps past midnight correctly | Pass |
+| Shut-down asks first and never fires while a job is pending | Pass |
+| `start_at` survives a restart (DB round-trip + migration) | Pass |
+| Release notes are extracted per version from the changelog | Pass |
 | Category rules parse, format and round-trip | Pass |
 | File lands in the category folder (auto-sort on) | Pass — `Video/` |
 | Without auto-sort the file stays in the base folder | Pass |
@@ -335,5 +351,7 @@ results do not depend on third-party sites.
 - HLS/DASH streaming video is not a single file and is unsupported.
 - A piece that is *already* being downloaded is never split in place; the
   splitter only re-divides the work that is still pending.
+- The shut-down action hands over to the operating system's power command
+  (`shutdown`/`rundll32 powrprof`); once it starts it cannot be undone.
 - The windowed exe has no console, so CLI progress is silent in the packaged
   build.

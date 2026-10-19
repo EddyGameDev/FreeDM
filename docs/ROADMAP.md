@@ -11,14 +11,15 @@
 > segment recovery), W4 (active/connection/per-host caps, FIFO, Retry-After)
 > and W1 (loopback control server + MV3 browser handoff).
 >
-> Milestone 2 has started — **N1–N5 done**: N1 (P0.2–P0.5: settings
+> Milestone 2 has started — **N1–N6 done**: N1 (P0.2–P0.5: settings
 > persistence, live per-download speed limit, retry-from-UI, full error
 > details), N2 (P1.3/P1.5: batch multi-URL add, opt-in clipboard watch),
 > N3 (P5.3/P5.10 + debt #3: size and checksum verification, abandoned
 > `.part` cleanup), N4 (P5.1/P5.2 + debt #4: dynamic segmentation,
-> adaptive piece sizing, global speed cap) and N5 (P1.2/P3.2–P3.4:
-> categories with auto-sort, list filtering, queue export/import, reveal in
-> Explorer). See `MILESTONE_2.md` §Progress log.
+> adaptive piece sizing, global speed cap), N5 (P1.2/P3.2–P3.4:
+> categories with auto-sort, list filtering, queue export/import) and N6
+> (P2.1–P2.3: scheduled starts, a daily download window, shut-down when
+> the queue drains). See `MILESTONE_2.md` §Progress log.
 
 This roadmap is ordered by **user value ÷ effort**. Items are independent
 unless a dependency is noted. Nothing here is implemented yet unless marked.
@@ -62,9 +63,9 @@ Effort is rough developer time: **S** ≈ ≤1 day, **M** ≈ 2–4 days,
 
 | # | Item | Effort | Notes |
 |---|---|---|---|
-| P2.1 | **Scheduled start** ("start at 02:00") | M | Timer per queued item. |
-| P2.2 | **Start/stop batch windows** | M | e.g. only download 1–6 AM. |
-| P2.3 | **Shutdown / sleep when queue done** | S | `os.system("shutdown /s /t 0")` on Windows; guard behind confirmation. |
+| ~~P2.1~~ | ~~**Scheduled start** ("start at 02:00")~~ | ~~M~~ | **DONE (N6).** **Schedule...** dialog; a job waits in the `scheduled` state, persisted in the DB. |
+| ~~P2.2~~ | ~~**Start/stop batch windows**~~ | ~~M~~ | **DONE (N6).** A daily window (may wrap past midnight) in the filter bar; nothing starts outside it. |
+| ~~P2.3~~ | ~~**Shutdown / sleep when queue done**~~ | ~~S~~ | **DONE (N6).** **Shut down when done** — confirmation-guarded, only when the queue is really empty. |
 | ~~P2.4~~ | ~~**Auto-resume on app start**~~ | ~~M~~ | **DONE (W3).** Unfinished jobs reload from SQLite and resume; toggle in the GUI (`auto_resume`). |
 
 ---
