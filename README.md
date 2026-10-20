@@ -152,6 +152,12 @@ It installs both executables, the licence and the browser extension, adds
 Start-menu and optional desktop shortcuts, and adds an uninstaller. The
 uninstaller never deletes your queue.
 
+To build it yourself:
+
+```
+iscc installer\FreeDM.iss      # -> dist\FreeDM-Setup-1.4.0.exe
+```
+
 ## About, updates and the log file
 
 **About FreeDM...** shows the version and has two optional extras:

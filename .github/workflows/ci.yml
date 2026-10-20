@@ -61,12 +61,61 @@ jobs:
             -ArgumentList "tests\range_server.py","8765","10" -WindowStyle Hidden
           Start-Sleep -Seconds 3
           $env:FREEDM_HOME = "$env:RUNNER_TEMP\freedm_home"
-          ./dist/FreeDM.exe --selftest `
-            "http://127.0.0.1:8765/test.bin" "$env:RUNNER_TEMP\selftest"
-          if ($LASTEXITCODE -ne 0) { throw "the frozen build failed its self-test" }
-          ./dist/FreeDM.exe --browser-selftest "$env:RUNNER_TEMP\selftest2"
-          if ($LASTEXITCODE -ne 0) { throw "the browser self-test failed" }
+          # A windowed exe is a GUI program: PowerShell does NOT wait for it,
+          # so start it and wait for the process itself.
+          $p = Start-Process -FilePath "./dist/FreeDM.exe" -Wait -PassThru `
+            -ArgumentList "--selftest","http://127.0.0.1:8765/test.bin",
+                          "$env:RUNNER_TEMP\selftest"
+          if ($p.ExitCode -ne 0) {
+            Get-Content "$env:RUNNER_TEMP\selftest\selftest_result.txt" -ErrorAction SilentlyContinue
+            throw "the frozen build failed its self-test (exit $($p.ExitCode))"
+          }
           Get-Content "$env:RUNNER_TEMP\selftest\selftest_result.txt"
+
+          $b = Start-Process -FilePath "./dist/FreeDM.exe" -Wait -PassThru `
+            -ArgumentList "--browser-selftest","$env:RUNNER_TEMP\selftest2"
+          if ($b.ExitCode -ne 0) {
+            Get-Content "$env:RUNNER_TEMP\selftest2\browser_selftest_result.txt" -ErrorAction SilentlyContinue
+            throw "the browser self-test failed (exit $($b.ExitCode))"
+          }
+
+          # The console build must print live progress.
+          $c = Start-Process -FilePath "./dist/FreeDM-cli.exe" -Wait -PassThru `
+            -ArgumentList "http://127.0.0.1:8765/test.bin",
+                          "-o","$env:RUNNER_TEMP\clitest","-t","4"
+          if ($c.ExitCode -ne 0) { throw "the console build failed" }
+          if (-not (Test-Path "$env:RUNNER_TEMP\clitest\test.bin")) {
+            throw "the console build downloaded nothing"
+          }
+
+      - name: Build the installer
+        shell: pwsh
+        run: |
+          choco install innosetup -y --no-progress
+          $iscc = "$env:ProgramFiles(x86)\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) {
+            $iscc = (Get-ChildItem "$env:LOCALAPPDATA\Programs" -Recurse `
+                     -Filter "ISCC.exe" | Select-Object -First 1).FullName
+          }
+          & $iscc installer\FreeDM.iss
+          if ($LASTEXITCODE -ne 0) { throw "the installer did not compile" }
+          Get-ChildItem dist\FreeDM-Setup-*.exe
+
+      - name: Install it and run the installed app
+        shell: pwsh
+        run: |
+          $setup = (Get-ChildItem dist\FreeDM-Setup-*.exe | Select-Object -First 1).FullName
+          $dir = "$env:RUNNER_TEMP\installed"
+          $p = Start-Process -FilePath $setup -Wait -PassThru `
+            -ArgumentList "/VERYSILENT","/SUPPRESSMSGBOXES","/NORESTART","/SP-","/DIR=$dir"
+          if ($p.ExitCode -ne 0) { throw "the installer failed (exit $($p.ExitCode))" }
+          foreach ($name in @("FreeDM.exe","FreeDM-cli.exe","LICENSE","NOTICE")) {
+            if (-not (Test-Path "$dir\$name")) { throw "the installer did not install $name" }
+          }
+          # The installed app must work.
+          $s = Start-Process -FilePath "$dir\FreeDM.exe" -Wait -PassThru `
+            -ArgumentList "--selftest","http://127.0.0.1:8765/test.bin","$env:RUNNER_TEMP\inst"
+          if ($s.ExitCode -ne 0) { throw "the installed app failed its self-test" }
 
       - name: Upload the builds
         uses: actions/upload-artifact@v4
@@ -75,4 +124,5 @@ jobs:
           path: |
             dist/FreeDM.exe
             dist/FreeDM-cli.exe
+            dist/FreeDM-Setup-*.exe
           if-no-files-found: error

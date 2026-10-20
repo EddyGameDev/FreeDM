@@ -119,14 +119,18 @@ SHUTDOWN = "shutdown"
 SLEEP = "sleep"
 
 
-def shutdown_command(mode: str, delay_seconds: int = 30) -> list[str] | None:
+def shutdown_command(mode: str, delay_seconds: int = 30,
+                     platform: str | None = None) -> list[str] | None:
     """The command that powers the machine down or puts it to sleep.
 
     ``None`` means "not supported on this platform" - the caller must not
-    pretend the action happened."""
+    pretend the action happened. ``platform`` defaults to the running system
+    and can be given explicitly so the command can be checked on any
+    machine."""
     import sys
 
-    if sys.platform.startswith("win"):
+    platform = platform or sys.platform
+    if platform.startswith("win"):
         if mode == SLEEP:
             # Suspend to disk without hibernation.
             return ["rundll32.exe", "powrprof.dll,SetSuspendState", "0,1,0"]

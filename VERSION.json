@@ -1,5 +1,5 @@
 {
-  "version": "1.3.1",
+  "version": "1.4.0",
   "url": "https://github.com/EddyGameDev/FreeDM/releases",
-  "notes": "Repository reorganisation: the application now lives in the freedm/ package. The builds published before the v1.2.1 security fixes are archived in releases/."
+  "notes": "A console build with live progress, an application icon, an installer script, CI, an opt-in update check and an opt-in log file."
 }

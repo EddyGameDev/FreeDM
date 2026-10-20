@@ -97,10 +97,14 @@ opt-in update check and an opt-in log file.
 ### Build
 
 - `FreeDM-1.4.0.exe` - Windows x64, single file, no installer (17.9 MB).
-- SHA-256: `d7f1a4fc61e68797e1b74b8c4c644720e3122b750dbfc4aafde14743f963ef26`
+- SHA-256: `03dd134fad9242853b3a9a2310bd79a9bc54bf0a5e89f818cc7e4cbbffbb0f17`
 - Verify with: `certutil -hashfile FreeDM-1.4.0.exe SHA256`
 - `FreeDM-cli.exe` - the same program with a console attached, so the command
-  line shows live progress. SHA-256: `4a54dcec6a9ceea19180b79f81a21328dd22a3d6b409f8accdacfb1b05acc441`
+  line shows live progress. SHA-256: `6e25d85b6234621d18e1a8daf11ef25aa850d813eca2fe5a476eee651508724c`
+- `FreeDM-Setup-1.4.0.exe` - the installer (Inno Setup; it installs both
+  executables, the licence, the notice and the extension, adds shortcuts and
+  an uninstaller, and never deletes your queue).
+  SHA-256: `c9598588f10a8c2d41609c7b242e104cd2278d341f3a17bd392e89ffb4aec564`
 - Source: <https://github.com/EddyGameDev/FreeDM>
 
 ### Added

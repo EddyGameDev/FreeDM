@@ -444,10 +444,17 @@ slowly stops working.
 - **An installer** (`P7.1`): `installer/FreeDM.iss` for Inno Setup (free).
   It installs both executables, the licence, the notice and the extension,
   adds Start-menu and optional desktop shortcuts, and adds an uninstaller that
-  never deletes your queue.
+  never deletes your queue. It **compiles** (`iscc installer/FreeDM.iss` ->
+  `dist/FreeDM-Setup-1.4.0.exe`), and the installed program was verified to
+  run and to download.
 - **CI** (`P7.6`): `.github/workflows/ci.yml` runs the suite on Windows,
-  Ubuntu and macOS on every push, then builds the Windows app and verifies it
-  with `--selftest` and `--browser-selftest`. No secrets, no paid services.
+  Ubuntu and macOS on every push, then builds the Windows app, compiles the
+  installer, installs it to a temporary folder and verifies the *installed*
+  program. No secrets, no paid services.
+  The first CI run found two real bugs, both fixed: a test that only passed on
+  Windows (it asserted the Windows shutdown command), and a race in the
+  verification step (PowerShell does not wait for a windowed exe, so the exit
+  code was read too early).
 - **An opt-in update check** (`P7.4`): the new **About FreeDM** dialog reads
   one small public `VERSION.json`. It only runs when the user presses the
   button and sends nothing about the user.

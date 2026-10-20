@@ -77,6 +77,30 @@ class ProjectLayoutTests(unittest.TestCase):
                        "LICENSE", "NOTICE"):
             self.assertIn(needed, text)
 
+    def test_the_installer_version_matches_the_app(self):
+        """The installer must never ship a stale version number."""
+        from freedm import __version__
+        with open(os.path.join(ROOT, "installer", "FreeDM.iss"), "r",
+                  encoding="utf-8") as fh:
+            text = fh.read()
+        self.assertIn(f'#define AppVersion "{__version__}"', text)
+
+    def test_the_version_file_matches_the_app(self):
+        from freedm import __version__
+        with open(os.path.join(ROOT, "VERSION.json"), "r",
+                  encoding="utf-8") as fh:
+            data = json.load(fh)
+        self.assertEqual(data["version"], __version__)
+
+    def test_the_changelog_has_a_section_for_the_current_version(self):
+        from freedm import __version__
+        import sys as _sys
+        _sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        import release_notes
+        text = release_notes.read_changelog()
+        # The changelog uses "v1.2.3" headings.
+        self.assertIn(f"v{__version__}", release_notes.versions(text))
+
     def test_the_ci_workflow_is_present(self):
         path = os.path.join(ROOT, ".github", "workflows", "ci.yml")
         self.assertTrue(os.path.exists(path))

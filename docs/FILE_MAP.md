@@ -51,7 +51,7 @@ F:\OMNI Config\Plan\FreeDM\
 ├── VERSION.json                 # the file the update check reads
 ├── pytest.ini / conftest.py    # the one-command test run
 ├── .github\workflows\ci.yml    # CI: tests on 3 systems + the build
-├── installer\FreeDM.iss        # the Inno Setup installer script
+├── installer\FreeDM.iss        # the Inno Setup installer (compiles with iscc)
 ├── scripts\
 │   ├── release_notes.py        # extract a version's notes from CHANGELOG.md
 │   └── make_icon.py            # generate icon.ico

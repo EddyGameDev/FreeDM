@@ -124,14 +124,28 @@ class WindowTests(unittest.TestCase):
 
 
 class ShutdownCommandTests(unittest.TestCase):
+    """The command must be checked for every platform, not just this one."""
+
     def test_windows_shutdown(self):
-        command = automation.shutdown_command(automation.SHUTDOWN, 30)
+        command = automation.shutdown_command(automation.SHUTDOWN, 30,
+                                              platform="win")
         self.assertTrue(command[0].lower().endswith("shutdown"))
         self.assertIn("/s", command)
 
     def test_windows_sleep(self):
-        command = automation.shutdown_command(automation.SLEEP)
+        command = automation.shutdown_command(automation.SLEEP,
+                                              platform="win")
         self.assertIn("powrprof.dll", " ".join(command))
+
+    def test_posix_shutdown(self):
+        command = automation.shutdown_command(automation.SHUTDOWN,
+                                              platform="linux")
+        self.assertEqual(command, ["shutdown", "-h", "now"])
+
+    def test_posix_sleep(self):
+        command = automation.shutdown_command(automation.SLEEP,
+                                              platform="darwin")
+        self.assertEqual(command, ["systemctl", "suspend"])
 
 
 class SchedulerScheduleTests(unittest.TestCase):
