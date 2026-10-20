@@ -1,6 +1,6 @@
 # FreeDM — Milestone 2: Everyday polish → engine strength
 
-**Status:** started 2026-10-19 · **N1–N9 done** · next: **N10** · Companion to
+**Status:** 2026-10-20 · **N1–N10 done — Milestone 2 complete** · Companion to
 [`NEXT_GOAL.md`](NEXT_GOAL.md) (Milestone 1 — **complete**) and
 [`ROADMAP.md`](ROADMAP.md) (full backlog).
 
@@ -39,7 +39,7 @@ without re-analysing the code.
 | 2026-10-19 | **N8 — Browser extras** | **DONE.** Firefox build of the extension (event page + gecko id, exported from the same source), a right-click **Download with FreeDM** context menu for links/media/pages, and a native messaging host (`--native-host`) so the extension can start FreeDM when it is closed. 32/32 tests. |
 | 2026-10-19 | **Repository reorganisation** | **DONE.** The application moved into the `freedm/` package (imported as `freedm.<module>`); the root now holds only the extension, tests, docs, release tooling and `releases/`. The builds published before the security fixes (v1.0.0, v1.1.0, v1.2.0) are archived in `releases/` with their hashes and a "superseded" notice. All 15 suites pass, the frozen build was rebuilt and verified. |
 | 2026-10-20 | **N9 — Packaging & quality** | **DONE.** `pytest.ini` + `conftest.py` (355 tests in one command), a console build `FreeDM-cli.exe`, a generated `icon.ico`, an Inno Setup installer script, a CI workflow (tests on Windows/Ubuntu/macOS + the verified Windows build), an opt-in update check and an opt-in rotating log file, both in the new **About FreeDM** dialog. 27/27 N9 tests. |
-| later | N10 — Streaming media | Deferred (large, separate subsystem) |
+| 2026-10-20 | **N10 — Streaming media** | **DONE.** `freedm/stream.py` parses HLS master/media playlists and DASH manifests; the engine detects a playlist and downloads the segments into one file, with a resume sidecar. AES-128 segments are decrypted by a small pure-Python AES (`freedm/aes.py`, verified against FIPS-197 and a reference implementation). 24/24 tests. |
 
 ---
 
@@ -56,7 +56,7 @@ without re-analysing the code.
 | N7 | Network options | P5.5, P5.8, P5.4 | M | **DONE** |
 | N8 | Browser extras | P4.2, P4.5, P4.3 | M | **DONE** |
 | N9 | Packaging & quality | P0.6, P0.7, P0.8, P7.1, P7.4, P7.5, P7.6, P7.8 | M | **DONE** |
-| N10 | Streaming media | P6.1–P6.4 | L | Deferred |
+| N10 | Streaming media | P6.1–P6.4 | L | **DONE** |
 
 Recommended order: **N1 → N2 → N3 → N4 → N5 → N6 → N7 → N8 → N9 → (N10)**.
 N1–N4 are small and high-impact; N5–N9 are larger but independent.
@@ -476,11 +476,46 @@ file, the update check, the log file, and the pytest collection).
 
 ---
 
-## N10 — Streaming media (deferred)
+## N10 — Streaming media ✅ DONE
 
-HLS (`P6.1`), DASH (`P6.2`), page media sniffing (`P6.3`) and optional FFmpeg
-remux (`P6.4`). Large, separate subsystem — explicitly out of scope until the
-goals above are done.
+**Why:** a stream is not a file — it is a playlist that points at many
+segments, so a download manager that only understands files cannot save one.
+
+**What shipped:**
+- **`freedm/stream.py`** parses the playlists:
+  - **HLS** master playlists (the list of quality levels) and media playlists
+    (the segments), including `#EXT-X-KEY` (AES-128), `#EXT-X-BYTERANGE` and
+    the `#EXT-X-MAP` initialisation segment;
+  - **DASH** manifests with `SegmentTemplate` (a fixed segment length) and with
+    `SegmentList` (explicit segment URLs);
+  - `sniff_page()` finds a playlist URL in a page's markup, so the user can
+    paste the page address instead of the playlist address.
+- The **engine** detects a playlist (by content type or by name), follows a
+  master playlist to the best variant, and downloads the segments one after
+  the other into the `.part` file — so the result is the whole stream in one
+  file, and the usual size/checksum verification applies to it.
+- A **resume sidecar** (`<file>.part.stream.json`) remembers how many bytes
+  are on disk, so an interrupted stream continues instead of starting over.
+- **AES-128** segments are decrypted. FreeDM does not want a heavy dependency
+  for that, so there is a small pure-Python implementation
+  (`freedm/aes.py`); it is checked against the FIPS-197 test vector and
+  against a reference implementation in the tests, and `cryptography` is used
+  instead when it happens to be installed.
+
+**Acceptance criteria:** all met.
+- An HLS playlist is downloaded and the segments joined in order. ✅
+- A master playlist is followed to the best variant. ✅
+- A DASH manifest is downloaded. ✅
+- An encrypted stream is decrypted. ✅
+
+**Not included:** FFmpeg remuxing (`P6.4`) — the file is written as it
+comes (MPEG-TS for a TS stream, fragmented MP4 for an fMP4 stream). Remuxing
+to a single MP4 would need FFmpeg, which is optional; the output still plays
+in a normal player.
+
+**Tests:** `tests/test_n10.py` — 24/24 pass (the AES implementation, the
+playlist parsers, page sniffing, and end-to-end downloads of an HLS stream, a
+master playlist, a DASH manifest and an encrypted stream, plus a resume).
 
 ---
 

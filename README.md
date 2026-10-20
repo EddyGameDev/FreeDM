@@ -187,6 +187,26 @@ python -m pytest            # the whole suite in one command
 python tests\test_w1.py     # or one suite at a time
 ```
 
+## Streaming media (HLS / DASH)
+
+Paste a playlist address (`.m3u8` or `.mpd`) and FreeDM downloads the
+segments and joins them into one file:
+
+```
+FreeDM.exe "https://example.com/live/stream.m3u8" -o C:\Videos
+```
+
+- **HLS**: master playlists (the best quality is chosen) and media playlists,
+  including AES-128 encrypted segments, byte ranges and the initialisation
+  segment.
+- **DASH**: manifests with `SegmentTemplate` and `SegmentList`.
+- An interrupted stream **continues** instead of starting over.
+- A playlist URL is also found when you paste the address of a page that
+  links to one.
+
+The file is written as it comes (MPEG-TS, or fragmented MP4). Turning it into
+a single MP4 would need FFmpeg, which is not bundled.
+
 ## How it works
 
 - **Probe** the URL (HEAD, then a tiny ranged GET) for size, filename and
@@ -219,6 +239,8 @@ python tests\test_w1.py     # or one suite at a time
 - **Polite concurrency**: only `max_active` jobs run (3 by default); total and
   per-host connection budgets cap thread counts. `429`/`503` responses honour
   `Retry-After` instead of hammering the server.
+- **Streaming media**: HLS and DASH playlists are downloaded segment by
+  segment into one file, with AES-128 decryption and resume.
 - **Browser handoff**: a Chrome/Edge extension pauses a browser download, asks
   the app to take over through a loopback-only, token-protected endpoint, then
   cancels the browser copy (or resumes it if the app is closed).
@@ -246,6 +268,8 @@ FreeDM/
 │   ├── categories.py       # categories, list filter, queue export/import
 │   ├── automation.py       # scheduled starts, daily window, shut-down
 │   ├── network.py          # proxy, IPv4/IPv6 preference, mirror sources
+│   ├── stream.py           # HLS/DASH playlists
+│   ├── aes.py              # a small pure-Python AES-128
 │   ├── native_host.py      # native messaging host (starts the app)
 │   ├── control_server.py   # loopback browser-handoff endpoint (token auth)
 │   └── gui.py              # Tkinter GUI

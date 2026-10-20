@@ -79,6 +79,7 @@ F:\OMNI Config\Plan\FreeDM\
 │   ├── test_n6.py              # N6 suite: scheduling, window, shut-down
 │   ├── test_n7.py              # N7 suite: proxy, address family, mirrors
 │   ├── test_n8.py              # N8 suite: Firefox, context menu, native host
+│   ├── test_n10.py             # N10 suite: HLS, DASH, AES
 │   ├── test_security.py        # security regressions (see docs/SECURITY.md)
 │   ├── test_changelog.py       # release-notes tooling
 │   ├── gui_testcase.py        # shared GUI test base (temp folder, no downloads)
@@ -320,6 +321,23 @@ message.
 The security review of 2026-10-19: every finding, what was checked, what was
 found and what was fixed, plus the rules future changes must keep. The
 regressions are pinned by `tests/test_security.py`.
+
+### `freedm/stream.py` — streaming media (N10)
+Parses the playlists and works out where the segments are.
+
+| Symbol | Purpose |
+|---|---|
+| `parse_m3u8(text, base_url)` | an HLS master or media playlist |
+| `parse_mpd(text, base_url)` | a DASH manifest (SegmentTemplate / SegmentList) |
+| `sniff_page(html)` | the playlist URLs in a web page |
+| `decrypt_aes128(data, key, iv)` | decrypt one segment (`cryptography` when installed, else `freedm/aes.py`) |
+| `key_from_data(uri, data)` | read an AES-128 key (raw or base64) |
+| `is_stream_url(url)` / `output_name(url)` | is this a playlist, and what should the file be called? |
+
+### `freedm/aes.py` — a small AES-128 (N10)
+A dependency-free AES-128-CBC decryptor, used when `cryptography` is not
+installed. It is checked against the FIPS-197 test vector and against a
+reference implementation in `tests/test_n10.py`.
 
 ### `CHANGELOG.md` and `scripts/release_notes.py`
 `CHANGELOG.md` is the single source of truth for the patch notes of every

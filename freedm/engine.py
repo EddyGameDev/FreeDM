@@ -1669,6 +1669,13 @@ class Download:
                 os.remove(self.state_path)
             except OSError:
                 pass
+        # N10: the stream sidecar goes with the state file.
+        stream_state = (self.state_path or "") + ".stream.json"
+        if stream_state and os.path.exists(stream_state):
+            try:
+                os.remove(stream_state)
+            except OSError:
+                pass
         self.finished_at = time.time()
         self.downloaded = self.total_size or self.downloaded
         self.speed = 0.0

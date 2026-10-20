@@ -50,6 +50,8 @@ crashes without losing progress.
   invalid lines are reported and duplicates skipped.
 - Optional clipboard watch that offers a copied link with a confirmation
   (off by default).
+- Streaming media: HLS and DASH playlists are downloaded segment by segment
+  into a single file, with AES-128 decryption and resume.
 - Organisation: categories with editable rules and an auto-sort toggle, a
   search box + status filter for the list, and queue export/import.
 - Automation: a scheduled start per job, a daily window in which downloads
@@ -74,7 +76,8 @@ These are deliberately **not** implemented. Do not assume they exist:
 - No timed/scheduled start or shutdown-when-done. A concurrency queue exists
   (active/connection/host caps, W4), but it does not run on a timer.
 - No FTP or SFTP support (HTTP/HTTPS only).
-- No streaming-video (HLS/DASH) grabber.
+- No streaming-video (HLS/DASH) grabber. → **N10 added HLS and DASH
+  playlist downloads** (no FFmpeg remuxing).
 - No proxy authentication UI, and no automatic cookie import from browsers
   (cookies/headers can be supplied manually or via the API). → **N7 added the
   proxy UI** (host, port, user, password, bypass list).

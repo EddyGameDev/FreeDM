@@ -1,5 +1,5 @@
 {
-  "version": "1.4.0",
+  "version": "1.5.0",
   "url": "https://github.com/EddyGameDev/FreeDM/releases",
-  "notes": "A console build with live progress, an application icon, an installer script, CI, an opt-in update check and an opt-in log file."
+  "notes": "Streaming media: HLS and DASH playlists are downloaded segment by segment into one file, with AES-128 decryption and resume. Also: a console build, an icon, an installer, CI, an opt-in update check and an opt-in log file."
 }

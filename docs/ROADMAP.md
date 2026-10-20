@@ -116,10 +116,10 @@ Effort is rough developer time: **S** ≈ ≤1 day, **M** ≈ 2–4 days,
 
 | # | Item | Effort | Notes |
 |---|---|---|---|
-| P6.1 | **HLS (m3u8) downloader** | L | Parse playlist, fetch segments, concatenate/remux. |
-| P6.2 | **DASH (mpd) downloader** | L | More complex; needs manifest parsing. |
-| P6.3 | **Media sniffing from page URL** | L | Requires a mini browser or extension. |
-| P6.4 | **FFmpeg integration** (optional) | M | Remux/convert; FFmpeg is free but adds a large dependency — make it optional. |
+| ~~P6.1~~ | ~~**HLS (m3u8) downloader**~~ | ~~L~~ | **DONE (N10).** Master and media playlists, AES-128, byte ranges, resume. |
+| ~~P6.2~~ | ~~**DASH (mpd) downloader**~~ | ~~L~~ | **DONE (N10).** SegmentTemplate and SegmentList manifests. |
+| ~~P6.3~~ | ~~**Media sniffing from page URL**~~ | ~~L~~ | **DONE (N10), best effort.** The playlist URL is found in the page's markup. |
+| P6.4 | **FFmpeg integration** (optional) | M | Remux/convert; FFmpeg is free but adds a large dependency — make it optional. **Not done (N10):** the file is written as it comes. |
 
 ---
 

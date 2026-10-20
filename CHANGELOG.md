@@ -89,6 +89,47 @@ First public build.
 - The windowed build has no console, so CLI progress is silent in the
   packaged app.
 
+## [v1.5.0] - 2026-10-20
+
+Streaming media: HLS and DASH playlists are downloaded into one file.
+
+### Build
+
+- `FreeDM-1.5.0.exe` - Windows x64, single file, no installer (17.9 MB).
+- SHA-256: `cb7d8bf54c346eb5db02c012f41a4ca85db44388855e9fb6a424c4726a7e27d8`
+- Verify with: `certutil -hashfile FreeDM-1.5.0.exe SHA256`
+- `FreeDM-cli.exe` - the console build. SHA-256: `7ea44c02e6497ca02f4f705dc7326d04c424bc0fc6045a123ae790e6e84a32e5`
+- `FreeDM-Setup-1.5.0.exe` - the installer. SHA-256: `c21fdc512b764101654d155d1f54dc3a4c46bf4d0263f95bb3ac874933371b2c`
+- Source: <https://github.com/EddyGameDev/FreeDM>
+
+### Added
+
+- **HLS** (.m3u8) downloads. A master playlist is followed to its best
+  variant; a media playlist is downloaded segment by segment and the segments
+  are joined into one file. `#EXT-X-KEY` (AES-128), `#EXT-X-BYTERANGE` and the
+  `#EXT-X-MAP` initialisation segment are all handled.
+- **DASH** (.mpd) downloads, for manifests with `SegmentTemplate` (a fixed
+  segment length) and with `SegmentList` (explicit segment URLs).
+- **Resume for streams**: an interrupted stream continues where it stopped
+  instead of starting over.
+- **AES-128 decryption without a new dependency.** FreeDM ships a small
+  pure-Python AES-128 (checked against the FIPS-197 test vector and against a
+  reference implementation in the tests); if `cryptography` happens to be
+  installed, that is used instead.
+- **Page sniffing**: paste the address of a page that links to a playlist and
+  FreeDM finds it.
+
+### Changed
+
+- The size and checksum verification now also apply to a downloaded stream.
+
+### Known limitations
+
+- The file is written as it comes (MPEG-TS, or fragmented MP4). Turning it
+  into a single MP4 would need FFmpeg, which is not bundled.
+- Page sniffing reads the page's markup: a playlist URL that a site builds in
+  JavaScript at run time is not found.
+
 ## [v1.4.0] - 2026-10-20
 
 Packaging and quality: a console build, an icon, an installer script, CI, an

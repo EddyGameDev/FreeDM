@@ -32,7 +32,7 @@ limited. **Planned** = not yet built (see `ROADMAP.md`).
 | A21 | Custom request headers | Implemented (W2; GUI dialog + API) | `Download(headers=...)`, `freedm/gui.py` → `_edit_headers` |
 | A22 | Per-connection connect/read timeouts | Implemented | constants in `freedm/engine.py` |
 | A23 | Dynamic mid-download re-segmentation | Implemented (N4) | `freedm/engine.py` → `_claim_piece`, `_split_piece` |
-| A24 | Checksum verification | Planned | `ROADMAP.md` |
+| A24 | Checksum verification | Implemented (N3) | `freedm/verify.py`; `freedm/engine.py` |
 | A25 | Resume integrity via `ETag`/`Last-Modified` + `If-Range` | Implemented (W5) | `freedm/engine.py` → `_probe`, `_validator_changed`, `_load_state` |
 | A26 | Auto-restart when the remote file changed | Implemented (W5) | `freedm/engine.py` → `FileChangedError`, `_reset_for_restart` |
 | A27 | Overwrite policy: rename / overwrite / cancel / callback | Implemented (W5) | `freedm/engine.py` → `_apply_existing_policy`, `_unique_path` |
@@ -114,6 +114,12 @@ limited. **Planned** = not yet built (see `ROADMAP.md`).
 | A103 | Opt-in update check (user-triggered, one small JSON) | Implemented (N9) | `freedm/update.py`; `VERSION.json` |
 | A104 | Opt-in rotating log file (no URLs, names, cookies or tokens) | Implemented (N9) | `freedm/logsetup.py` |
 | A105 | One-command test run with pytest | Implemented (N9) | `pytest.ini`, `conftest.py` |
+| A106 | HLS master and media playlists (AES-128, byte ranges, init segment) | Implemented (N10) | `freedm/stream.py` → `parse_m3u8` |
+| A107 | DASH manifests (SegmentTemplate, SegmentList) | Implemented (N10) | `freedm/stream.py` → `parse_mpd` |
+| A108 | Stream download: the segments become one file | Implemented (N10) | `freedm/engine.py` → `_run_stream` |
+| A109 | A stream continues after an interruption | Implemented (N10) | `freedm/engine.py` → `_save_stream_state` |
+| A110 | AES-128 decryption without a heavy dependency | Implemented (N10) | `freedm/aes.py`; `freedm/stream.py` → `decrypt_aes128` |
+| A111 | Find a playlist URL in a web page | Implemented (N10) | `freedm/stream.py` → `sniff_page` |
 
 ### Segment sizing rules (`freedm/engine.py`)
 - Files ≤ `MIN_SEGMENT_SIZE` (1 MB) are downloaded as a single stream.
@@ -270,7 +276,8 @@ results do not depend on third-party sites.
 | **Security suite: `tests/test_security.py` (29 tests)** | **Pass** |
 | **N8 suite: `tests/test_n8.py` (32 tests)** | **Pass** |
 | **N9 suite: `tests/test_n9.py` (30 tests)** | **Pass** |
-| The whole suite runs with `python -m pytest` | Pass — 360 tests |
+| **N10 suite: `tests/test_n10.py` (24 tests)** | **Pass** |
+| The whole suite runs with `python -m pytest` | Pass — 384 tests |
 | **Changelog suite: `tests/test_changelog.py` (11 tests)** | **Pass** |
 | A future start time holds the job in `scheduled` | Pass — released when the time comes |
 | A closed window blocks every start; Start Now overrides it | Pass |
