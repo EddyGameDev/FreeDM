@@ -123,6 +123,8 @@ limited. **Planned** = not yet built (see `ROADMAP.md`).
 | A112 | A playlist may only name http(s) URLs and not private addresses | Implemented (G1) | `freedm/stream.py` → `check_segment_url` |
 | A113 | The user's headers never follow a playlist to another host | Implemented (G1) | `freedm/engine.py` → `_stream_headers` |
 | A114 | The native host names the extension that may call it | Implemented (G1) | `freedm/native_host.py` → `extension_origins` |
+| A115 | `--version` prints the version, licence and settings folder | Implemented (G2) | `freedm/main.py`; `freedm/version.py` |
+| A116 | One version for the app, the installer, the extension and the update check | Implemented (G2) | `freedm/version.py`; `scripts/set_version.py` |
 
 ### Segment sizing rules (`freedm/engine.py`)
 - Files ≤ `MIN_SEGMENT_SIZE` (1 MB) are downloaded as a single stream.
@@ -229,6 +231,8 @@ Default save folder: `%USERPROFILE%\Downloads`.
 | C6 | `--selftest URL DIR` headless verification | Implemented |
 | C7 | Ctrl+C pauses and keeps `.part` for resume | Implemented |
 | C8 | Console output from the windowed exe | Not possible (windowed build) |
+| C9 | `--version` / `-V` | Implemented (G2) |
+| C10 | `--help` without a URL | Implemented (G2) |
 
 ---
 
@@ -281,6 +285,7 @@ results do not depend on third-party sites.
 | **N9 suite: `tests/test_n9.py` (30 tests)** | **Pass** |
 | **N10 suite: `tests/test_n10.py` (24 tests)** | **Pass** |
 | **Security suite 2: `tests/test_security2.py` (40 tests)** | **Pass** |
+| The app, the installer, `VERSION.json` and the extension report the same version | Pass |
 | The whole suite runs with `python -m pytest` | Pass — 424 tests |
 | **Changelog suite: `tests/test_changelog.py` (11 tests)** | **Pass** |
 | A future start time holds the job in `scheduled` | Pass — released when the time comes |

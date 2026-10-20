@@ -569,23 +569,26 @@ class App:
     # -- N9: about, updates, logging ----------------------------------------
     def about_dialog(self) -> None:
         """Version, licence and the optional update check / log file."""
-        from freedm import __version__
+        from freedm.version import version_info, version_text
+        info = version_info()
         win = tk.Toplevel(self.root)
         win.title("About FreeDM")
         win.geometry("520x340")
         win.transient(self.root)
         pad = {"padx": 12, "pady": 6}
 
-        ttk.Label(win, text="FreeDM", font=("", 13, "bold")).pack(anchor="w",
-                                                                    **pad)
-        ttk.Label(win, text=f"Version {__version__}").pack(anchor="w", **pad)
+        ttk.Label(win, text=info["app"], font=("", 13, "bold")).pack(
+            anchor="w", **pad)
+        ttk.Label(win, text=f"Version {info['version']}").pack(anchor="w", **pad)
         ttk.Label(
             win,
             text=("A free, source-available download manager.\n"
-                  "Licensed under the PolyForm Noncommercial License 1.0.0:\n"
+                  f"Licensed under the {info['license']}:\n"
                   "noncommercial use, modification and redistribution."),
             justify="left",
         ).pack(anchor="w", **pad)
+        ttk.Label(win, text=f"Settings and queue: {info['settings']}",
+                  foreground="#555").pack(anchor="w", **pad)
 
         ttk.Checkbutton(
             win, text="Write a log file (for bug reports)",
@@ -603,7 +606,7 @@ class App:
         def check() -> None:
             status.configure(text="Checking...")
             win.update_idletasks()
-            newer, message = update.check_for_update(__version__)
+            newer, message = update.check_for_update(info["version"])
             status.configure(text=message)
             if newer:
                 self._notify_status("A newer FreeDM is available")

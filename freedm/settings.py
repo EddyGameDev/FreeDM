@@ -62,7 +62,6 @@ DEFAULTS: dict[str, str] = {
     "allow_private_segments": "0",  # let a playlist reach the local network
     # N9 additions
     "log_enabled": "0",         # write a rotating log file
-    "check_updates": "0",       # allow the update check (still user-triggered)
 }
 
 #: Keys whose value is an integer.
@@ -71,7 +70,7 @@ _INT_KEYS = frozenset({"max_active", "max_connections", "max_per_host", "threads
 #: Keys whose value is a boolean ("1"/"0").
 _BOOL_KEYS = frozenset({"auto_resume", "control_enabled", "clipboard_monitor",
                         "auto_sort", "shutdown_when_done", "prefer_ipv4",
-                        "log_enabled", "check_updates",
+                        "log_enabled",
                         "allow_private_segments"})
 #: Keys whose value is a float.
 _FLOAT_KEYS = frozenset({"speed_limit", "global_speed_limit"})

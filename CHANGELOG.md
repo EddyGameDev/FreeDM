@@ -89,6 +89,39 @@ First public build.
 - The windowed build has no console, so CLI progress is silent in the
   packaged app.
 
+## [v1.7.0] - 2026-10-20
+
+Release polish: the program answers `--version`, the version lives in one
+place, and the repository describes what the project actually is.
+
+### Build
+
+- `FreeDM-1.7.0.exe` - Windows x64, single file, no installer (18 MB).
+- SHA-256: `BUILD_HASH_v1_7_0`
+- Verify with: `certutil -hashfile FreeDM-1.7.0.exe SHA256`
+- `FreeDM-cli.exe` - the console build. SHA-256: `BUILD_HASH_CLI_17`
+- `FreeDM-Setup-1.7.0.exe` - the installer. SHA-256: `BUILD_HASH_SETUP_17`
+- Source: <https://github.com/EddyGameDev/FreeDM>
+
+### Added
+
+- **`--version`** (and `-V`): prints the version, the licence, the source
+  address and where the queue and settings live. `--help` no longer needs a
+  URL either, and running the program with no arguments still opens the GUI.
+- **`scripts/set_version.py`**: sets the version in every place that carries
+  it - the app, `VERSION.json`, the installer and both browser-extension
+  manifests - so they cannot drift apart.
+
+### Changed
+
+- The version has **one source of truth** (`freedm/version.py`). The command
+  line, the **About** dialog and the update check all read it.
+- The browser extension's version now matches the app's, and a test keeps it
+  that way.
+- The repository has a description, topics and CI/release badges.
+- The unused `check_updates` setting has been removed - the update check is
+  (and always was) only run when the user asks for it.
+
 ## [v1.6.0] - 2026-10-20
 
 Security round two: the modules added after the first review (the network

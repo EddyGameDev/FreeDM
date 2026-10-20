@@ -166,17 +166,49 @@ def main(argv: list[str] | None = None) -> int:
         from freedm import native_host
         return native_host.main()
 
+    if argv and argv[0] in ("--version", "-V"):
+        from freedm.version import version_text
+        text = version_text()
+        if sys.stdout is not None:
+            # A console build (or a source run): print it, so it can be piped.
+            _emit(text + "\n")
+        else:
+            # The windowed build has no console: show it in a small dialog.
+            try:
+                import tkinter as tk
+                from tkinter import messagebox
+                root = tk.Tk()
+                root.withdraw()
+                messagebox.showinfo("FreeDM", text)
+                root.destroy()
+            except Exception:       # noqa: BLE001 - no display, no dialog
+                pass
+        return 0
+
     if not argv:
         from freedm.gui import run_gui
         run_gui()
         return 0
 
-    parser = argparse.ArgumentParser(prog="FreeDM", description="Free download manager")
-    parser.add_argument("url", help="URL to download")
+    parser = argparse.ArgumentParser(
+        prog="FreeDM", description="Free download manager",
+        epilog="Run with no arguments to open the graphical interface.")
+    parser.add_argument("url", nargs="?",
+                        help="URL to download (omit to open the GUI)")
     parser.add_argument("-o", "--output", default=None, help="output directory")
     parser.add_argument("-t", "--threads", type=int, default=8, help="number of threads")
     parser.add_argument("--limit", type=float, default=0.0, help="speed limit in bytes/s (0=off)")
+    parser.add_argument("--version", "-V", action="store_true",
+                        help="show the version and exit")
     args = parser.parse_args(argv)
+    if args.version:
+        from freedm.version import version_text
+        _emit(version_text() + "\n")
+        return 0
+    if not args.url:
+        from freedm.gui import run_gui
+        run_gui()
+        return 0
     return cli_download(args)
 
 

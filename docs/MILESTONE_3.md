@@ -18,7 +18,7 @@ acceptance test.
 | Date | Goal | Result |
 |---|---|---|
 | 2026-10-20 | **G1 — Security round two** | **DONE.** The seven modules added after N6 are reviewed and documented (S10–S14 in `docs/SECURITY.md`). A playlist can no longer carry the user's `Authorization` header to another host, may only name `http(s)` URLs, and may not reach a private address unless the user allows it. The native host now names the extension that may call it. Category folder names are sanitised. 40 new tests. |
-| next | G2 — Release polish | Not started |
+| 2026-10-20 | **G2 — Release polish** | **DONE.** `FreeDM.exe --version` prints the version, the licence and where the settings live; `--help` no longer needs a URL. The version has one source of truth (`freedm/version.py`) shared by the CLI, the About dialog and the update check, and `scripts/set_version.py` writes it into the app, `VERSION.json`, the installer and both extension manifests. The repository has a description, topics and badges. The dead `check_updates` setting is gone. |
 | next | G3 — Split the two large modules | Not started |
 | next | G4 — Streams in the interface | Not started |
 | next | G5 — Everyday interface polish | Not started |
@@ -80,7 +80,7 @@ a playlist is data from a server, and FreeDM fetches whatever it names.
 
 ---
 
-## G2 — Release polish
+## G2 — Release polish ✅ DONE
 
 **Why:** findings **R3**, **R5** and **R6**. A published application should
 answer `--version`, and the repository should describe what it actually is.
@@ -101,12 +101,28 @@ answer `--version`, and the repository should describe what it actually is.
   milestone"* section, technical-debt item 7, and the `security.md` heading
   in `FILE_MAP.md`.
 
-**Acceptance criteria:**
-- `FreeDM.exe --version` prints the version without complaining.
+**What was built:**
+- **`--version` / `-V`** prints the version, the licence, the project address
+  and where the queue and settings live. `--help` works without a URL, and
+  running with no arguments still opens the GUI.
+- **One source of truth** for the version: `freedm/version.py` is what the
+  command line, the **About** dialog and the update check all read.
+- **`scripts/set_version.py`** writes a new version into the app,
+  `VERSION.json`, the installer and *both* extension manifests at once, and a
+  test checks that they agree - so the drift that was found (the extension
+  was still at 1.0.0) cannot happen again.
+- The **repository** now has a description that says what the project is,
+  ten topics, and CI and release badges in the README.
+- The dead `check_updates` setting is removed.
+
+**Acceptance criteria:** all met.
+- `FreeDM.exe --version` prints the version without complaining. ✅
 - The repository description and topics mention streaming and the console
-  build; the README shows the CI status.
-- The extension version cannot drift from the app version unnoticed.
-- No setting in `settings.py` is written but never read.
+  build; the README shows the CI status. ✅
+- The extension version cannot drift from the app version unnoticed. ✅
+- No setting in `settings.py` is written but never read. ✅
+
+**Tests:** `tests/test_n9.py` grew to 33 tests.
 
 ---
 

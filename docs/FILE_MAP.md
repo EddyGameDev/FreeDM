@@ -55,6 +55,7 @@ F:\OMNI Config\Plan\FreeDM\
 ├── installer\FreeDM.iss        # the Inno Setup installer (compiles with iscc)
 ├── scripts\
 │   ├── release_notes.py        # extract a version's notes from CHANGELOG.md
+│   └── set_version.py          # set the version everywhere at once
 │   └── make_icon.py            # generate icon.ico
 ├── docs\
 │   ├── OVERVIEW.md             # what it is, scope, how it works
@@ -345,6 +346,21 @@ Parses the playlists and works out where the segments are.
 A dependency-free AES-128-CBC decryptor, used when `cryptography` is not
 installed. It is checked against the FIPS-197 test vector and against a
 reference implementation in `tests/test_n10.py`.
+
+### `freedm/version.py` — the version, in one place (G2)
+Everything that shows or compares the version reads it from here.
+
+| Symbol | Purpose |
+|---|---|
+| `version_info()` | the app name, version, licence, project URL and settings folder |
+| `version_text()` | the banner the command line prints for `--version` |
+| `settings_folder()` | where the queue and the settings live |
+| `read_version_file()` | the `VERSION.json` the update check compares against |
+
+### `scripts/set_version.py` (G2)
+Writes a new version into **every** file that carries one - the app,
+`VERSION.json`, the installer and both extension manifests - so they cannot
+drift apart. A test checks that they agree.
 
 ### `CHANGELOG.md` and `scripts/release_notes.py`
 `CHANGELOG.md` is the single source of truth for the patch notes of every

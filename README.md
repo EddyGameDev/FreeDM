@@ -1,5 +1,9 @@
 # FreeDM — Free Download Manager
 
+[![CI](https://github.com/EddyGameDev/FreeDM/actions/workflows/ci.yml/badge.svg)](https://github.com/EddyGameDev/FreeDM/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/EddyGameDev/FreeDM)](https://github.com/EddyGameDev/FreeDM/releases/latest)
+[![License](https://img.shields.io/badge/license-PolyForm--Noncommercial%201.0.0-blue)](LICENSE)
+
 A 100% free, **source-available** Internet Download Manager (IDM) alternative.
 Multi-threaded segmented downloads, pause/resume, crash-safe resume, and a
 simple GUI. No license fees, no ads, no paid APIs.
@@ -129,6 +133,11 @@ simply stays in the browser.
 
 ## Command line
 
+```
+FreeDM.exe --version      # the version, the licence and where things live
+FreeDM.exe --help
+```
+
 The same program also works from a terminal:
 
 ```
@@ -169,6 +178,18 @@ iscc installer\FreeDM.iss      # -> dist\FreeDM-Setup-1.4.0.exe
   `%APPDATA%\FreeDM\freedm.log`, for bug reports. It is off unless you turn
   it on, and it records the app's own events, never your URLs, file names,
   cookies or tokens.
+
+## Changing the version
+
+The version lives in one place, but it appears in several files (the app,
+`VERSION.json`, the installer and both extension manifests). Set them all at
+once with:
+
+```
+python scripts\set_version.py 1.8.0
+```
+
+A test checks that they agree, so they cannot drift apart.
 
 ## Building from source
 

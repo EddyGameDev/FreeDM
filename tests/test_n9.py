@@ -101,6 +101,39 @@ class ProjectLayoutTests(unittest.TestCase):
         # The changelog uses "v1.2.3" headings.
         self.assertIn(f"v{__version__}", release_notes.versions(text))
 
+    def test_every_file_that_carries_the_version_agrees(self):
+        """G2: the app, VERSION.json, the installer and the extension must
+        all report the same version."""
+        from freedm import __version__
+        version_file = json.load(open(os.path.join(ROOT, "VERSION.json"),
+                                      encoding="utf-8"))
+        self.assertEqual(version_file["version"], __version__)
+        installer = open(os.path.join(ROOT, "installer", "FreeDM.iss"),
+                         encoding="utf-8").read()
+        self.assertIn(f'#define AppVersion "{__version__}"', installer)
+        for name in ("manifest.json", "manifest.firefox.json"):
+            manifest = json.load(open(os.path.join(ROOT, "extension", name),
+                                      encoding="utf-8"))
+            self.assertEqual(manifest["version"], __version__, name)
+
+    def test_the_version_script_writes_every_file(self):
+        """The script that sets the version must cover all of them."""
+        import sys as _sys
+        _sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        import set_version
+        covered = {name for name, _pattern, _template in set_version.TARGETS}
+        self.assertIn("freedm/__init__.py", covered)
+        self.assertIn("installer/FreeDM.iss", covered)
+        self.assertIn("extension/manifest.json", covered)
+        self.assertIn("extension/manifest.firefox.json", covered)
+
+    def test_the_version_script_refuses_a_nonsense_version(self):
+        import sys as _sys
+        _sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        import set_version
+        with self.assertRaises(SystemExit):
+            set_version.set_version("not-a-version")
+
     def test_the_ci_workflow_is_present(self):
         path = os.path.join(ROOT, ".github", "workflows", "ci.yml")
         self.assertTrue(os.path.exists(path))
@@ -230,16 +263,16 @@ class SettingsTests(unittest.TestCase):
         from freedm import settings as S
         prefs = S.load(None)
         self.assertFalse(prefs["log_enabled"])
-        self.assertFalse(prefs["check_updates"])
+        self.assertNotIn("check_updates", prefs)
 
     def test_round_trip(self):
         from freedm import settings as S
         store = JobStore(":memory:")
         try:
-            S.save(store, log_enabled=True, check_updates=True)
+            S.save(store, log_enabled=True)
             prefs = S.load(store)
             self.assertIs(prefs["log_enabled"], True)
-            self.assertIs(prefs["check_updates"], True)
+
         finally:
             store.close()
 
