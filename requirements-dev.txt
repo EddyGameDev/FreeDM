@@ -1,0 +1,8 @@
+# Test-only helpers.
+#
+# pycryptodome is used by the *test server* to encrypt its HLS fixture, so
+# the decryption path can be checked end to end. FreeDM itself does not
+# need it: it decrypts AES-128 with its own small pure-Python
+# implementation (freedm/aes.py), or with `cryptography` when that happens
+# to be installed.
+pycryptodome>=3.15

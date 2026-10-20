@@ -29,7 +29,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install requests pytest
+          python -m pip install -r requirements.txt -r requirements-dev.txt
 
       # The GUI suites skip themselves when there is no display or no Tk.
       - name: Run the test suite
@@ -48,7 +48,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install requests pyinstaller pillow
+          python -m pip install -r requirements.txt -r requirements-dev.txt
 
       - name: Build FreeDM.exe and FreeDM-cli.exe
         shell: pwsh

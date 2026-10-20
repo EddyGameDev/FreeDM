@@ -218,6 +218,12 @@ class StreamDownloadTests(unittest.TestCase):
         self.assertEqual(data, b"".join(range_server.HLS_SEGMENTS))
 
     def test_an_encrypted_stream_is_decrypted(self):
+        # The test server encrypts the fixture with pycryptodome (a test-only
+        # helper); FreeDM itself needs no such dependency.
+        try:
+            import Crypto.Cipher  # noqa: F401
+        except ImportError:
+            self.skipTest("pycryptodome is not installed")
         dl = Download(self.base + "/hls/enc.m3u8", dest_dir=self.out)
         dl.start()
         self.assertEqual(wait_for(dl), DONE, dl.error)
