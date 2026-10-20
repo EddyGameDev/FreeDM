@@ -72,6 +72,67 @@ def _write_random(size: int) -> None:
         os.utime(TEST_FILE, (future, future))
 
 
+
+# --- N10: streaming media fixtures ----------------------------------------
+# A tiny HLS stream: three segments that together make one file.
+HLS_SEGMENTS = [b"SEGMENT-ONE-" * 8, b"SEGMENT-TWO-" * 8, b"SEGMENT-THREE-" * 8]
+HLS_KEY = bytes(range(16))
+HLS_IV = bytes(range(16, 32))
+
+
+def hls_master() -> bytes:
+    return ("#EXTM3U\n"
+            "#EXT-X-STREAM-INF:BANDWIDTH=800000,RESOLUTION=640x360\n"
+            "media.m3u8\n"
+            "#EXT-X-STREAM-INF:BANDWIDTH=2400000,RESOLUTION=1280x720\n"
+            "media.m3u8\n").encode()
+
+
+def hls_media() -> bytes:
+    lines = ["#EXTM3U", "#EXT-X-TARGETDURATION:4", "#EXT-X-MEDIA-SEQUENCE:0"]
+    for index, _segment in enumerate(HLS_SEGMENTS):
+        lines.append("#EXTINF:4.0,")
+        lines.append(f"seg{index}.ts")
+    lines.append("#EXT-X-ENDLIST")
+    return ("\n".join(lines) + "\n").encode()
+
+
+def hls_encrypted() -> bytes:
+    """The same stream, encrypted with AES-128 (the HLS default)."""
+    lines = ["#EXTM3U", "#EXT-X-TARGETDURATION:4",
+             '#EXT-X-KEY:METHOD=AES-128,URI="key.bin",IV=0x'
+             + HLS_IV.hex(), "#EXT-X-MEDIA-SEQUENCE:0"]
+    for index, _segment in enumerate(HLS_SEGMENTS):
+        lines.append("#EXTINF:4.0,")
+        lines.append(f"enc{index}.ts")
+    lines.append("#EXT-X-ENDLIST")
+    return ("\n".join(lines) + "\n").encode()
+
+
+def hls_encrypted_segment(index: int) -> bytes:
+    """One encrypted segment (AES-128-CBC, PKCS#7 padded)."""
+    from Crypto.Cipher import AES
+    from Crypto.Util.Padding import pad
+    plain = HLS_SEGMENTS[index]
+    cipher = AES.new(HLS_KEY, AES.MODE_CBC, HLS_IV)
+    return cipher.encrypt(pad(plain, 16))
+
+
+def dash_manifest() -> bytes:
+    return ("""<?xml version="1.0" encoding="utf-8"?>
+<MPD xmlns="urn:mpeg:dash:schema:mpd:2011" type="static"
+     mediaPresentationDuration="PT12S" minBufferTime="PT2S">
+  <Period>
+    <AdaptationSet mimeType="video/mp4">
+      <Representation id="1" bandwidth="1200000" codecs="avc1">
+        <SegmentTemplate media="seg-$Number$.ts" duration="4"
+                         timescale="1" startNumber="1" segmentCount="3"/>
+      </Representation>
+    </AdaptationSet>
+  </Period>
+</MPD>
+""").encode()
+
 def ensure_file(size_mb: float) -> int:
     size = int(size_mb * 1024 * 1024)
     if not os.path.exists(TEST_FILE) or os.path.getsize(TEST_FILE) != size:
@@ -207,6 +268,52 @@ class Handler(BaseHTTPRequestHandler):
                     with _lock:
                         _throttled_bytes += len(chunk)
 
+    def _send_bytes(self, body: bytes, content_type: str) -> None:
+        """Send a small in-memory body (the stream fixtures)."""
+        self.send_response(200)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        if self.command != "HEAD":
+            self.wfile.write(body)
+
+    def _stream_fixture(self, path: str) -> bool:
+        """Serve the HLS/DASH fixtures. True when the path was handled."""
+        if path == "/hls/master.m3u8":
+            self._send_bytes(hls_master(), "application/vnd.apple.mpegurl")
+            return True
+        if path == "/hls/media.m3u8":
+            self._send_bytes(hls_media(), "application/vnd.apple.mpegurl")
+            return True
+        if path == "/hls/enc.m3u8":
+            self._send_bytes(hls_encrypted(), "application/vnd.apple.mpegurl")
+            return True
+        if path == "/hls/key.bin":
+            self._send_bytes(HLS_KEY, "application/octet-stream")
+            return True
+        if path == "/dash/manifest.mpd":
+            self._send_bytes(dash_manifest(), "application/dash+xml")
+            return True
+        if path.startswith("/hls/seg") and path.endswith(".ts"):
+            index = int(path[len("/hls/seg"):-len(".ts")])
+            if 0 <= index < len(HLS_SEGMENTS):
+                self._send_bytes(HLS_SEGMENTS[index], "video/mp2t")
+                return True
+        if path.startswith("/hls/enc") and path.endswith(".ts"):
+            index = int(path[len("/hls/enc"):-len(".ts")])
+            if 0 <= index < len(HLS_SEGMENTS):
+                self._send_bytes(hls_encrypted_segment(index),
+                                 "video/mp2t")
+                return True
+        if path.startswith("/dash/seg") and path.endswith(".ts"):
+            # DASH numbers its segments from startNumber (1 by default).
+            number = int(path[len("/dash/seg"):-len(".ts")].lstrip("-"))
+            index = number - 1
+            if 0 <= index < len(HLS_SEGMENTS):
+                self._send_bytes(HLS_SEGMENTS[index], "video/mp2t")
+                return True
+        return False
+
     def do_HEAD(self) -> None:  # noqa: N802
         path = urlparse(self.path).path
         if path == "/redirect/test.bin":
@@ -214,6 +321,8 @@ class Handler(BaseHTTPRequestHandler):
             self.send_header("Location", "/test.bin")
             self.send_header("Content-Length", "0")
             self.end_headers()
+            return
+        if self._stream_fixture(path):
             return
         if path in self.FILE_PATHS:
             if not self._gate_ok(path):
@@ -226,6 +335,9 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:  # noqa: N802
         global RETRY_REMAINING
         path = urlparse(self.path).path
+
+        if self._stream_fixture(path):
+            return
 
         if path == "/retry/test.bin" and RETRY_REMAINING > 0:
             RETRY_REMAINING -= 1

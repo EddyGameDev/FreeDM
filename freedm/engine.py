@@ -22,6 +22,9 @@ import requests
 from freedm.verify import (ALGORITHMS, parse_checksum, file_digest, verify_size,
                     verify_checksum)
 from freedm.network import PROXY, mirror_path
+from freedm.stream import (StreamError, parse_m3u8, parse_mpd, is_stream_url,
+                           decrypt_aes128, key_from_data,
+                           output_name as stream_output_name)
 
 # ---------------------------------------------------------------------------
 # Tunables
@@ -335,6 +338,12 @@ class Download:
         # N6: when this job should start (Unix timestamp); 0/None = right away.
         self.start_at: float | None = None
 
+        # N10: streaming media (HLS/DASH) instead of a single file.
+        self.is_stream = False
+        self.stream_playlist = None
+        self.stream_segments = 0
+        self.stream_encrypted = False
+
         self.status = IDLE
         self.error: str | None = None
         self.speed = 0.0
@@ -472,7 +481,11 @@ class Download:
             ok = False
             while True:
                 try:
-                    ok = self._run_once()
+                    if self.is_stream:
+                        # N10: a playlist is downloaded segment by segment.
+                        ok = self._run_stream()
+                    else:
+                        ok = self._run_once()
                     break
                 except FileChangedError:
                     if self._restarted:
@@ -541,6 +554,155 @@ class Download:
         raise VerificationError(
             f"incomplete download: expected {self.total_size} bytes, "
             f"got {self.downloaded}")
+
+    # -- streaming media (N10) ---------------------------------------------
+    def _looks_like_playlist(self, content_type: str, url: str) -> bool:
+        """True when the response is a stream playlist, not a file."""
+        kind = (content_type or "").split(";")[0].strip().lower()
+        if kind in ("application/vnd.apple.mpegurl", "application/x-mpegurl",
+                    "audio/mpegurl", "application/dash+xml"):
+            return True
+        return is_stream_url(url)
+
+    def _fetch_playlist(self, url: str):
+        """Download and parse one playlist."""
+        response = self.session.get(
+            url, headers=self._session_headers(),
+            timeout=(CONNECT_TIMEOUT, READ_TIMEOUT),
+            proxies=self._proxies_for(url),
+            verify=self.verify_ssl, allow_redirects=True)
+        try:
+            text = response.text
+            final = response.url or url
+            kind = (response.headers.get("Content-Type") or "").lower()
+        finally:
+            response.close()
+        if "dash+xml" in kind or final.lower().endswith(".mpd"):
+            return parse_mpd(text, final)
+        return parse_m3u8(text, final)
+
+    def _load_playlist(self):
+        """The playlist of this stream (a master playlist is followed)."""
+        playlist = self._fetch_playlist(self._request_url)
+        if playlist.is_master:
+            best = playlist.best_variant()
+            if best is None:
+                raise StreamError("the master playlist has no variants")
+            playlist = self._fetch_playlist(best.url)
+        return playlist
+
+    def _run_stream(self) -> bool:
+        """Download a stream's segments into the .part file.
+
+        The segments are written one after the other, so the result is the
+        whole stream in one file. A small sidecar remembers what is already
+        on disk, so an interrupted stream continues instead of starting over.
+        """
+        playlist = self._load_playlist()
+        segments = playlist.segments
+        if not segments:
+            raise StreamError("the playlist contains no segments")
+        self.stream_playlist = playlist
+        self.stream_segments = len(segments)
+        self.stream_encrypted = playlist.encrypted
+
+        state_file = (self.state_path or "") + ".stream.json"
+        sizes = self._read_stream_state(state_file)
+        skip = min(len(sizes), len(segments))
+        done_bytes = sum(sizes[:skip])
+        if done_bytes and os.path.exists(self.part_path or ""):
+            try:
+                with open(self.part_path, "r+b") as fh:
+                    fh.truncate(done_bytes)
+            except OSError:
+                skip, done_bytes = 0, 0
+
+        appending = bool(done_bytes) and os.path.exists(self.part_path or "")
+        with open(self.part_path, "ab" if appending else "wb") as out:
+            if not appending:
+                self.downloaded = 0
+            for index in range(skip, len(segments)):
+                data = self._fetch_segment(segments[index], index)
+                out.write(data)
+                done_bytes += len(data)
+                self.downloaded = done_bytes
+                self._store_save()
+                self._save_stream_state(state_file, segments, index + 1)
+        self.total_size = max(self.total_size, done_bytes)
+        return True
+
+    def _read_stream_state(self, path: str) -> list[int]:
+        """The sizes of the segments already written (for a resume)."""
+        if not path or not os.path.exists(path):
+            return []
+        try:
+            import json
+            with open(path, "r", encoding="utf-8") as fh:
+                saved = json.load(fh)
+            if saved.get("url") != self.url:
+                return []
+            return [int(s) for s in saved.get("sizes", [])]
+        except (OSError, ValueError, TypeError):
+            return []
+
+    def _save_stream_state(self, path: str, segments, count: int) -> None:
+        """Remember what is on disk, so an interrupted stream can continue."""
+        if not path:
+            return
+        try:
+            import json
+            sizes = self._read_stream_state(path)
+            while len(sizes) < count:
+                sizes.append(0)
+            with open(path, "w", encoding="utf-8") as fh:
+                json.dump({"url": self.url, "sizes": sizes[:count]}, fh)
+        except OSError:
+            pass
+
+    def _fetch_segment(self, segment, index: int) -> bytes:
+        """Fetch one segment, decrypting it when the playlist says so."""
+        headers = self._session_headers()
+        if segment.byte_range:
+            length, offset = segment.byte_range
+            headers["Range"] = f"bytes={offset}-{offset + length - 1}"
+        attempt = 0
+        while True:
+            try:
+                response = self.session.get(
+                    segment.url, headers=headers,
+                    timeout=(CONNECT_TIMEOUT, READ_TIMEOUT),
+                    proxies=self._proxies_for(segment.url),
+                    verify=self.verify_ssl, allow_redirects=True)
+                try:
+                    if response.status_code >= 400:
+                        raise IOError(f"HTTP {response.status_code}")
+                    data = response.content
+                finally:
+                    response.close()
+                break
+            except Exception as exc:      # noqa: BLE001
+                attempt += 1
+                if attempt > MAX_RETRIES:
+                    raise IOError(f"segment {index} failed: {exc}") from exc
+                time.sleep(min(2 ** attempt * 0.5, 10))
+        if segment.key_url:
+            key = self._fetch_key(segment)
+            iv = segment.key_iv or index.to_bytes(16, "big")
+            data = decrypt_aes128(data, key, iv)
+        return data
+
+    def _fetch_key(self, segment) -> bytes:
+        """Fetch an AES-128 key."""
+        response = self.session.get(
+            segment.key_url, headers=self._session_headers(),
+            timeout=(CONNECT_TIMEOUT, READ_TIMEOUT),
+            proxies=self._proxies_for(segment.key_url),
+            verify=self.verify_ssl, allow_redirects=True)
+        try:
+            data = response.content
+        finally:
+            response.close()
+        return key_from_data(segment.key_url, data)
 
     def _reset_for_restart(self) -> None:
         """Discard partial data after the remote file changed, then re-probe."""
@@ -833,6 +995,7 @@ class Download:
         accept_ranges = False
         fname = None
         auth_status = None
+        content_type = ""
         final_url = self.final_url
 
         for index in range(self._source_count):
@@ -856,6 +1019,7 @@ class Download:
                     auth_status = r.status_code
                 elif r.status_code < 400:
                     size = int(r.headers.get("Content-Length", 0) or 0)
+                    content_type = r.headers.get("Content-Type", "")
                     accept_ranges = (r.headers.get("Accept-Ranges", "")
                                      .lower() == "bytes")
                     fname = self._filename_from_headers(r.headers)
@@ -877,6 +1041,8 @@ class Download:
                                          verify=self.verify_ssl)
                     try:
                         found_url = r.url or found_url
+                        content_type = content_type or r.headers.get(
+                            "Content-Type", "")
                         if r.status_code in (401, 403):
                             auth_status = r.status_code
                         self.etag = r.headers.get("ETag") or self.etag
@@ -913,6 +1079,14 @@ class Download:
         self.validator = self.etag or self.last_modified
         if fname and not self.filename:
             self.filename = sanitize_filename(fname)
+        # N10: a playlist is not a file - it points at many segments.
+        self.is_stream = self._looks_like_playlist(content_type, self.url)
+        if self.is_stream:
+            self.supports_range = False
+            self.total_size = 0
+            if not self.filename:
+                self.filename = sanitize_filename(
+                    stream_output_name(self.url, container=".ts"))
 
     @staticmethod
     def _filename_from_headers(headers) -> str | None:
