@@ -186,7 +186,7 @@ class W5Tests(unittest.TestCase):
     # -- B9: disk space ---------------------------------------------------
     def test_disk_space_precheck(self):
         dl = Download(self.url(), dest_dir=self.out, num_threads=4)
-        with mock.patch("freedm.engine.shutil.disk_usage",
+        with mock.patch("freedm.engine.files.shutil.disk_usage",
                         return_value=SimpleNamespace(free=0)):
             with self.assertRaises(IOError) as ctx:
                 dl._probe()

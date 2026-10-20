@@ -3,187 +3,197 @@
 [![CI](https://github.com/EddyGameDev/FreeDM/actions/workflows/ci.yml/badge.svg)](https://github.com/EddyGameDev/FreeDM/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/EddyGameDev/FreeDM)](https://github.com/EddyGameDev/FreeDM/releases/latest)
 [![License](https://img.shields.io/badge/license-PolyForm--Noncommercial%201.0.0-blue)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
 
-A 100% free, **source-available** Internet Download Manager (IDM) alternative.
-Multi-threaded segmented downloads, pause/resume, crash-safe resume, and a
-simple GUI. No license fees, no ads, no paid APIs.
+A free, **source-available** download manager for Windows, in the style of
+Internet Download Manager. It splits a file into many pieces, fetches them in
+parallel, and puts them back together — with pause, resume, a persistent queue
+and browser handoff. No licence fees, no ads, no paid APIs, no account.
 
-> **License:** FreeDM is **source-available** under the
+> **Licence:** FreeDM is **source-available** under the
 > [PolyForm Noncommercial License 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0).
 > You may use, change and redistribute it for noncommercial purposes; commercial
-> use is not permitted. It is *not* an open-source license — see
+> use is not permitted. It is *not* an open-source licence — see
 > [LICENSE](LICENSE) for the full terms and [NOTICE](NOTICE) for the copyright
 > notice.
 
-## Download / Run
+---
 
-**Windows build (single file, no installer):**
-<https://github.com/EddyGameDev/FreeDM/releases/tag/v1.1.0>
+## What it does
 
-```
-FreeDM-1.1.0.exe
-```
+**Downloading**
 
-Just double-click it — that launches the GUI. It needs no installation and
-makes no registry changes; the queue and your settings live in
-`%APPDATA%\FreeDM`.
+- **Segmented downloads** — the file is split into pieces fetched in parallel
+  over `Range` requests, and written straight into one `.part` file.
+- **Dynamic splitting** — the remaining work is kept in a queue and re-divided
+  as workers finish, and the piece size (1–8 MB) follows the *slowest* active
+  connection, so one bad pipe cannot hold back the whole file.
+- **Pause, resume and crash-safe resume** — progress is written to a sidecar
+  next to the file; restarting continues where it stopped.
+- **Safe resume** — the server's `ETag`/`Last-Modified` are checked, so a
+  changed file restarts cleanly instead of producing a corrupt one.
+- **Integrity** — the finished size is checked against the advertised size, and
+  an expected `sha256`/`sha512`/`sha1`/`md5` digest is verified.
+- **Streams** — an HLS (`.m3u8`) or DASH (`.mpd`) playlist is downloaded
+  segment by segment and joined into one file, with AES-128 decryption.
+- **Mirrors** — alternative sources for the same file, tried in turn.
+- **Proxies** — HTTP or SOCKS, with credentials and a bypass list.
+- **Speed limits** — per download, and one cap for everything at once.
 
-The built application in a source checkout is:
+**The queue**
 
-```
-dist\FreeDM.exe
-```
+- Jobs, status and segment offsets are kept in a local SQLite database, so
+  closing the app (or the machine) loses nothing.
+- **Categories** with editable rules, and an auto-sort toggle that files
+  downloads into `Video/`, `Music/`, `Documents/` and so on.
+- A **search box** and status filter that hide the rows that do not match.
+- **Scheduled starts** and a **daily window** in which downloads may run.
+- **Export and import** the queue as a file (a plain list of URLs works too).
+- **Shut down when done**, if you want the machine to power off when the queue
+  is empty.
 
-### GUI usage
-1. Paste a URL into the **URL(s)** field. To add several at once, paste one URL
-   per line (or separated by spaces) — each valid line becomes its own job;
-   lines that are not http(s) URLs are reported, and duplicates are skipped.
+**The browser**
+
+- A Chrome/Edge **and** Firefox extension that hands browser downloads to
+  FreeDM, with the page's cookies.
+- A right-click **"Download with FreeDM"** menu for links, videos and pages.
+- A **native messaging host**, so the browser can start FreeDM by itself.
+
+**Also**
+
+- A **console build** with live progress, for the terminal.
+- An **installer** (Inno Setup script) and a fully portable build.
+- An **opt-in log file** and an **opt-in update check** — neither phones home
+  unless you ask it to.
+
+---
+
+## Download
+
+Grab the latest release (the page always shows the current build):
+
+**<https://github.com/EddyGameDev/FreeDM/releases/latest>**
+
+It contains three files:
+
+| File | What it is |
+|---|---|
+| `FreeDM-<version>.exe` | the app — double-click it, nothing to install |
+| `FreeDM-cli-<version>.exe` | the same program with a console attached, so it prints live progress |
+| `FreeDM-Setup-<version>.exe` | an installer with shortcuts and an uninstaller |
+
+The portable build needs no installation and makes no registry changes: the
+queue and your settings live in `%APPDATA%\FreeDM`, so you can delete the
+executable and nothing is left behind. The uninstaller never deletes your
+queue either.
+
+---
+
+## Using it
+
+### The window
+
+1. Paste a URL into the **URL(s)** field. To add several at once, paste one
+   URL per line — each valid line becomes its own job; lines that are not
+   http(s) URLs are reported, and duplicates are skipped.
 2. Pick a **Save to** folder (defaults to your Downloads folder).
-3. Set the number of **Threads** (more = faster on big files).
+3. Set the number of **Threads** (more is faster on big files).
 4. Click **Add Download**.
 
-Tick **Watch clipboard** to have FreeDM offer a link you copy anywhere. It is
-off by default, remembers your choice, and always asks before adding.
-
-Use the buttons below the list to **Pause / Resume / Cancel / Remove**,
+The buttons under the list are **Pause / Resume / Cancel / Remove**,
 **Open File**, **Open Folder**, **Show in Folder**, **Limit...**,
 **Global Limit...**, **Checksum...**, **Details...**, **Clean Up...**,
-**Export...**, **Import...**, or **Clear Completed**.
+**Export...**, **Import...** and **Clear Completed**. The **Schedule...** button
+picks a date and time for the selected jobs.
 
-The **Search** box and the **Status** filter above the list hide the rows that
-do not match (by name, URL, host or status) while the app keeps running. The
-filter is remembered for the next launch.
+The **Search** box and the **Status** filter hide the rows that do not match
+(by name, URL, host or status) while the app keeps running. The filter is
+remembered for the next launch.
 
-**Sort into category folders** saves new downloads into a subfolder named after
-their type (Video, Music, Documents, Archives, Programs, Other). Click
-**Categories...** to edit the rules. **Export...** writes the queue to a file
-and **Import...** reads it back (a plain list of URLs also works).
+A few of the rest, in one place:
 
-**Schedule...** picks a date and time for the selected jobs: they wait until
-then and the schedule survives a restart. The **Window:** control in the filter
-bar limits downloads to certain hours of the day (e.g. `01:00` – `06:00`; it
-may run past midnight). **Shut down when done** powers the machine off once
-every job has finished — it always asks first.
-
-**Network...** configures a proxy (HTTP or SOCKS) with an optional user name
-and password, plus a bypass list for hosts that must be reached directly, and
-a **Test connection** button that checks the settings with a real request.
-**Mirrors...** sets alternative sources for a file: a mirror is a base URL and
-the original path is appended to it, so a slow server can be replaced by a
-fast one.
-
-**Limit...** sets a live speed cap (in KB/s; `0` or empty = unlimited) on the
-selected downloads and remembers it as the default for new downloads.
-**Global Limit...** caps the *combined* speed of every download — useful on a
-metered or shared connection. **Details...** shows the full job information,
-including the complete error text when something fails. A failed or cancelled
-job can be retried with **Resume** (it re-probes and continues from the `.part`
-file).
-
-**Checksum...** takes the digest published by the site (`sha256:1a2b3c…`, or
-just the 64-character hex digest) and verifies the file when the download
-finishes. A mismatch marks the job as failed and shows both digests. The
-digest is remembered for new downloads.
-
-**Clean Up...** finds abandoned `.part` and `.part.state.json` files left over
-from downloads you gave up on and deletes them. Only files older than the age
-you set are listed, so running downloads are never touched.
-
-The app remembers your last save folder, thread count, default speed limit and
-window size/position. If the queue ever looks wrong, delete
-`%APPDATA%\FreeDM\freedm.db` to reset the queue *and* preferences.
-
-The queue is saved automatically. Close the app mid-download and reopen it:
-unfinished jobs are listed and resume (toggle **Auto-resume** in the toolbar).
-The database lives at `%APPDATA%\FreeDM\freedm.db`.
+- **Limit...** — a live speed cap for the selection (KB/s, `0` = unlimited).
+- **Global Limit...** — a cap on the *combined* speed of every download.
+- **Checksum...** — the digest the site publishes; a mismatch fails the job and
+  shows both digests.
+- **Details...** — everything about a job, including the full error text.
+- **Network...** — the proxy, the bypass list, the IPv4/IPv6 preference, and
+  a **Test connection** button.
+- **Categories...** — the rules that decide which folder a file lands in.
+- **Mirrors...** — alternative sources for a file.
+- **Clean Up...** — deletes abandoned `.part` files older than the age you
+  set; running downloads are never touched.
+- **About FreeDM...** — the version, an update check and the log switch.
 
 Only a few downloads run at once (default 3; set **Active:** in the toolbar).
-The rest show **queued**. Select a row and use **Start Now**, **Move Up**, or
-**Move Down** to control the order.
+The rest show **queued**; select a row and use **Start Now**, **Move Up** or
+**Move Down** to change the order.
 
-For sites that need a login or block hotlinking, click **Headers...** and add
-lines such as `Referer: https://example.com/` or `Cookie: session=...`. Those
-headers apply to downloads added afterwards.
-
-### Browser handoff (Chrome / Edge)
-
-1. Click **Browser...**, then **Export extension**. This writes the extension to
-   `%APPDATA%\FreeDM\extension` and opens the folder.
-2. In Chrome/Edge open `chrome://extensions` (or `edge://extensions`), turn on
-   **Developer mode**, click **Load unpacked**, and choose that folder.
-3. Open the extension's **Options**, paste the token from the **Browser...**
-   dialog, and click **Save**.
-
-Now a download started in the browser is handed to FreeDM (URL, cookies,
-referer and user-agent) and the browser's own copy is cancelled. If FreeDM is
-closed, the browser download continues as usual. The control server listens only
-on `127.0.0.1:6801` and requires the token; uncheck **Accept downloads from the
-browser** to turn it off.
-
-**Firefox:** click **Export for Firefox...** and load the folder with
-`about:debugging#/runtime/this-firefox` → **Load Temporary Add-on...**. The
-handoff works exactly like Chrome/Edge.
-
-**Right-click → Download with FreeDM** hands a link, a video or a page to
-FreeDM, with that page's cookies, so protected links work too.
-
-**Install native host** lets the browser start FreeDM by itself when a
-download is handed over while the app is closed. Without it the download
-simply stays in the browser.
-
-## Command line
-
-```
-FreeDM.exe --version      # the version, the licence and where things live
-FreeDM.exe --help
-```
-
-The same program also works from a terminal:
+### The command line
 
 ```
 FreeDM-cli.exe "https://example.com/big.iso" -o C:\Downloads -t 16
 FreeDM-cli.exe "https://example.com/big.iso" --limit 2000000   # 2 MB/s cap
+FreeDM-cli.exe --version      # the version, the licence and where things live
+FreeDM-cli.exe --help
 ```
 
-`FreeDM-cli.exe` is the **console build**: it prints live progress. The
-normal `FreeDM.exe` is a windowed app and cannot print anything (it has no
-console attached).
+The console build prints live progress. The windowed build cannot print
+anything (it has no console attached), so `FreeDM.exe --version` shows a small
+dialog instead.
 
-## Installing
+### Browser handoff
 
-The portable build needs nothing: download `FreeDM-1.4.0.exe` and run it.
-Your queue and settings live in `%APPDATA%\FreeDM` — nothing is written to
-the registry, so the program can be deleted by simply removing the file.
+1. Click **Browser...** → **Export extension**. That copies the extension to
+   `%APPDATA%\FreeDM\extension` and opens the folder.
+2. In Chrome/Edge open `chrome://extensions` (or `edge://extensions`), turn on
+   **Developer mode**, click **Load unpacked**, and pick that folder.
+   *Firefox:* **Export for Firefox...**, then `about:debugging#/runtime/this-firefox`
+   → **Load Temporary Add-on...**.
+3. Open the extension's **Options**, paste the token from the **Browser...**
+   dialog, and **Save**.
 
-If you prefer an installer, `installer/FreeDM.iss` is a ready-made
-[Inno Setup](https://jrsoftware.org/isdl.php) script (Inno Setup is free).
-It installs both executables, the licence and the browser extension, adds
-Start-menu and optional desktop shortcuts, and adds an uninstaller. The
-uninstaller never deletes your queue.
+A download started in the browser is then handed to FreeDM — URL, cookies,
+referer and user-agent — and the browser's own copy is cancelled. If FreeDM is
+closed, the browser download simply continues. The control server listens only
+on `127.0.0.1:6801` and needs the token; uncheck **Accept downloads from the
+browser** to turn it off.
 
-To build it yourself:
+**Install native host** lets the browser start FreeDM by itself when a download
+is handed over while the app is closed. Without it the download stays in the
+browser.
+
+---
+
+## Building from source
 
 ```
-iscc installer\FreeDM.iss      # -> dist\FreeDM-Setup-1.4.0.exe
+python -m pip install -r requirements.txt -r requirements-dev.txt
+powershell -ExecutionPolicy Bypass -File build.ps1
 ```
 
-## About, updates and the log file
+`build.ps1` produces `dist\FreeDM.exe` (windowed) and `dist\FreeDM-cli.exe`
+(console), and generates the icon if it is missing. To build the installer too
+(needs [Inno Setup](https://jrsoftware.org/isdl.php), which is free):
 
-**About FreeDM...** shows the version and has two optional extras:
+```
+iscc installer\FreeDM.iss      # -> dist\FreeDM-Setup-<version>.exe
+```
 
-- **Check for updates** - reads one small public `VERSION.json` and tells you
-  whether a newer build exists. It only ever runs when you press the button,
-  and it sends nothing about you.
-- **Write a log file** - a rotating log (2 MB, three old files kept) in
-  `%APPDATA%\FreeDM\freedm.log`, for bug reports. It is off unless you turn
-  it on, and it records the app's own events, never your URLs, file names,
-  cookies or tokens.
+## Testing
+
+```
+python -m pytest            # the whole suite
+python tests\test_w1.py     # or one suite at a time
+```
+
+The suite runs on Windows, Ubuntu and macOS in CI
+([`.github/workflows/ci.yml`](.github/workflows/ci.yml)), which also builds
+the app, compiles the installer, installs it and runs the *installed* program.
 
 ## Changing the version
 
-The version lives in one place, but it appears in several files (the app,
-`VERSION.json`, the installer and both extension manifests). Set them all at
-once with:
+The version appears in a few files, so set them all at once:
 
 ```
 python scripts\set_version.py 1.8.0
@@ -191,260 +201,47 @@ python scripts\set_version.py 1.8.0
 
 A test checks that they agree, so they cannot drift apart.
 
-## Building from source
+---
 
-```
-python -m pip install -r requirements.txt
-powershell -ExecutionPolicy Bypass -File build.ps1
-```
+## Security
 
-`build.ps1` builds `dist\FreeDM.exe` (windowed) and `dist\FreeDM-cli.exe`
-(console), and generates `icon.ico` if it is missing.
+FreeDM was reviewed for security twice; the findings and the fixes are in
+[`docs/SECURITY.md`](docs/SECURITY.md), and the whole project was reviewed in
+[`docs/REVIEW.md`](docs/REVIEW.md). In short:
 
-Run the tests with either:
+- The control server listens on `127.0.0.1` only, needs a 256-bit token for
+  every state-changing request, refuses a `Host` header that is not loopback,
+  and gives no CORS permission to ordinary web pages — only to the extension.
+- The extension keeps the token in `chrome.storage.local`, so it never leaves
+  the device, and asks for no permission it does not use.
+- A playlist can only name `http(s)` URLs, cannot reach your local network
+  unless you allow it, and never carries your own headers to another host.
+- The queue database, the token and the proxy password are stored in plain
+  text under `%APPDATA%\FreeDM`. On a shared Windows account, other users of
+  that account can read them.
 
-```
-python -m pytest            # the whole suite in one command
-python tests\test_w1.py     # or one suite at a time
-```
+## Where things stand
 
-## Streaming media (HLS / DASH)
-
-Paste a playlist address (`.m3u8` or `.mpd`) and FreeDM downloads the
-segments and joins them into one file:
-
-```
-FreeDM.exe "https://example.com/live/stream.m3u8" -o C:\Videos
-```
-
-- **HLS**: master playlists (the best quality is chosen) and media playlists,
-  including AES-128 encrypted segments, byte ranges and the initialisation
-  segment.
-- **DASH**: manifests with `SegmentTemplate` and `SegmentList`.
-- An interrupted stream **continues** instead of starting over.
-- A playlist URL is also found when you paste the address of a page that
-  links to one.
-
-The file is written as it comes (MPEG-TS, or fragmented MP4). Turning it into
-a single MP4 would need FFmpeg, which is not bundled.
-
-## How it works
-
-- **Probe** the URL (HEAD, then a tiny ranged GET) for size, filename and
-  whether the server supports `Accept-Ranges: bytes`.
-- **Session fidelity**: one `requests.Session` per download carries cookies,
-  `Referer`, `User-Agent`, and `Authorization` on the probe and every segment.
-  Cookies can be passed as a dict, a cookie string, or an extension-style list.
-  Redirects are followed once and the final URL is reused.
-- **Segmented download**: the file is split into many pieces; a pool of worker
-  threads fetches each piece with `Range: bytes=X-Y` and writes it to its own
-  offset in a single `.part` file. The remaining work is kept in a queue, so
-  a worker that finishes early takes over the largest piece still pending and
-  splits it if needed. The piece size (1–8 MB) follows the *slowest* active
-  connection, so one slow pipe cannot hold back a large part of the file.
-- **Fallback**: servers without Range support get a normal single-stream
-  download.
-- **Resume**: progress per piece is saved to `<file>.part.state.json` every
-  half second. Pause, close, crash, or reboot — restarting reuses the `.part`
-  file and only downloads what is missing.
-- **Resume integrity**: the state records the server's `ETag`/`Last-Modified`.
-  If the remote file changed, the stale partial is discarded and the download
-  restarts instead of producing a corrupt file.
-- **Integrity checks**: a short download is never reported as done, and an
-  expected `sha256`/`sha512`/`sha1`/`md5` digest is verified when the file
-  finishes (a mismatch fails the job and shows both digests).
-- **Persistent queue**: every job, status and segment offset is mirrored to a
-  local SQLite DB. On launch the queue is restored; unfinished jobs resume
-  automatically. If the `.part.state.json` sidecar is lost, the DB supplies the
-  segment offsets. A broken DB never aborts an active download.
-- **Polite concurrency**: only `max_active` jobs run (3 by default); total and
-  per-host connection budgets cap thread counts. `429`/`503` responses honour
-  `Retry-After` instead of hammering the server.
-- **Streaming media**: HLS and DASH playlists are downloaded segment by
-  segment into one file, with AES-128 decryption and resume.
-- **Browser handoff**: a Chrome/Edge extension pauses a browser download, asks
-  the app to take over through a loopback-only, token-protected endpoint, then
-  cancels the browser copy (or resumes it if the app is closed).
-- **Retries**: each piece retries up to 6 times with exponential backoff.
-- **Rate limiting**: a per-download token-bucket cap, settable live from the GUI
-  (**Limit...**) and persisted; `0` means unlimited. **Global Limit...** caps
-  the combined throughput of all downloads.
-- **No silent overwrite**: if the destination already exists, the default is to
-  save as `name (1).ext`. `on_existing` also accepts `overwrite` or `cancel`.
-- **Disk-space check**: the download fails early with a clear message when the
-  destination drive is too full.
+[`docs/MILESTONE_3.md`](docs/MILESTONE_3.md) holds the plan for what comes
+next, [`docs/MILESTONE_2.md`](docs/MILESTONE_2.md) records the finished work
+and [`docs/REVIEW.md`](docs/REVIEW.md) is the review behind the plan.
+[`docs/FEATURES.md`](docs/FEATURES.md) lists every feature and where it
+lives; [`docs/FILE_MAP.md`](docs/FILE_MAP.md) is the map of the source tree.
 
 ## Project layout
 
 ```
 FreeDM/
-├── freedm/                 # THE APPLICATION (import as `freedm.*`)
-│   ├── main.py             # entry point: GUI / CLI / self-tests / native host
-│   ├── engine.py           # download engine (segments, resume, retry, limits)
-│   ├── store.py            # SQLite queue (jobs, segments, settings)
-│   ├── scheduler.py        # active/connection/host caps + FIFO queue
-│   ├── settings.py         # typed settings (folder, threads, limit, window)
-│   ├── batch.py            # batch URL parsing + clipboard link detection
-│   ├── verify.py           # size/checksum verification + orphan cleanup
-│   ├── categories.py       # categories, list filter, queue export/import
-│   ├── automation.py       # scheduled starts, daily window, shut-down
-│   ├── network.py          # proxy, IPv4/IPv6 preference, mirror sources
-│   ├── stream.py           # HLS/DASH playlists
-│   ├── aes.py              # a small pure-Python AES-128
-│   ├── native_host.py      # native messaging host (starts the app)
-│   ├── control_server.py   # loopback browser-handoff endpoint (token auth)
-│   └── gui.py              # Tkinter GUI
-├── extension/              # MV3 browser extension (Chrome/Edge/Firefox)
-├── tests/                  # the regression suites
-├── scripts/                # release tooling
-├── docs/                   # documentation
-├── releases/               # ARCHIVED older builds (see releases/README.md)
-├── installer/              # the Inno Setup installer script
-├── .github/workflows/      # CI: the suite on 3 systems + the Windows build
-├── icon.ico                # the application icon (generated)
-├── VERSION.json            # the file the update check reads
-├── pytest.ini / conftest.py # `python -m pytest` runs everything
-├── dist/FreeDM.exe         # the built application
-├── LICENSE                 # PolyForm Noncommercial 1.0.0 (full text)
-├── NOTICE                  # copyright notice / Required Notice line
-├── CHANGELOG.md            # per-build patch notes (source of truth)
-├── build.ps1               # rebuild FreeDM.exe AND FreeDM-cli.exe
-└── requirements.txt
+├── freedm/                 # the application
+│   ├── engine/             # the download engine
+│   ├── gui/                # the window
+│   ├── version.py          # the version, in one place
+│   └── ...                 # the rest of the modules
+├── extension/              # the browser extension (Chrome/Edge/Firefox)
+├── tests/  scripts/  docs/  releases/  dist/
+├── LICENSE  NOTICE  CHANGELOG.md  README.md
 ```
 
-## Security
+## Licence
 
-FreeDM was reviewed for security on 2026-10-19; the findings and the fixes
-are in [`docs/SECURITY.md`](docs/SECURITY.md), and the whole project was
-reviewed again on 2026-10-20 in [`docs/REVIEW.md`](docs/REVIEW.md). The
-short version:
-
-- The control server listens on `127.0.0.1` only, requires a 256-bit token
-  for every state-changing request, rejects a `Host` header that is not
-  loopback, and gives **no CORS permission to ordinary web pages** — only to
-  the browser extension.
-- The extension keeps the token in `chrome.storage.local`, so it never leaves
-  the device, and asks only for the permissions it uses.
-- A hand-written `Cookie:` header is kept in the cookie jar, so it is scoped
-  to the host it belongs to and survives a redirect.
-- Opening a downloaded executable or script always asks first.
-- The queue database, the control token and the proxy password are stored in
-  plain text under `%APPDATA%\FreeDM`. On a shared Windows account, other
-  users of that account can read them.
-
-## Where things stand
-
-[`docs/MILESTONE_2.md`](docs/MILESTONE_2.md) records the finished work
-(N1–N10). [`docs/MILESTONE_3.md`](docs/MILESTONE_3.md) holds the plan for
-what comes next, and [`docs/REVIEW.md`](docs/REVIEW.md) is the review it
-comes from.
-
-## Changelog and release notes
-
-[`CHANGELOG.md`](CHANGELOG.md) is the single source of truth for the patch
-notes of every build. Each release has its own section listing the **build**
-(file name, size, SHA-256) followed by what was added, changed and fixed.
-
-To get the notes for a release:
-
-```
-python scripts\release_notes.py --list
-python scripts\release_notes.py v1.1.0
-python scripts\release_notes.py v1.1.0 --file notes.md
-python scripts\release_notes.py --hash dist\FreeDM.exe
-```
-
-The same text is used for the GitHub release page, so the notes there always
-match the shipped binary.
-
-## Testing
-
-Regression suites (each starts its own server on an ephemeral port):
-
-```
-python tests\test_w1.py
-python tests\test_w2.py
-python tests\test_w3.py
-python tests\test_w4.py
-python tests\test_w5.py
-python tests\test_n1.py
-python tests\test_n2.py
-python tests\test_n3.py
-python tests\test_n4.py
-python tests\test_n5.py
-python tests\test_n6.py
-python tests\test_n7.py
-python tests\test_n8.py
-python tests\test_security.py
-python tests\test_changelog.py
-```
-
-For a manual download, start the Range-capable test server and run:
-
-```
-python tests\range_server.py 8765 20
-python -m freedm.main "http://127.0.0.1:8765/test.bin" -o %TEMP%\freedm_test -t 8
-```
-
-`--selftest` runs a headless download and writes the result to a log file
-(useful to verify a frozen build):
-
-```
-dist\FreeDM.exe --selftest "http://127.0.0.1:8765/test.bin" "%TEMP%\freedm_frozen"
-dist\FreeDM.exe --browser-selftest "%TEMP%\freedm_browser"
-```
-
-## License
-
-FreeDM is **source-available** under the
-[PolyForm Noncommercial License 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0).
-
-- You may use, modify and redistribute FreeDM for **noncommercial** purposes.
-- Commercial use is **not** permitted. Permitted purposes include personal,
-  research, hobby and noncommercial-organisation use.
-- The complete, unmodified license text is in [LICENSE](LICENSE); the copyright
-  notice is in [NOTICE](NOTICE).
-
-This is a *source-available* license, not an open-source license: it does not
-grant the freedoms the Open Source Definition requires.
-
-### Third-party components
-
-| Component | License | Notes |
-|---|---|---|
-| [requests](https://github.com/psf/requests) | Apache-2.0 | Bundled in the exe |
-| [urllib3](https://github.com/urllib3/urllib3) | MIT | Bundled (via requests) |
-| [certifi](https://github.com/certifi/python-certifi) | MPL-2.0 | Bundled (via requests) |
-| [idna](https://github.com/kennethreitz/idna) | BSD-3-Clause | Bundled (via requests) |
-| [charset-normalizer](https://github.com/jawah/charset_normalizer) | MIT | Bundled (via requests) |
-| Python 3 | PSF-2.0 | Runtime |
-| [PyInstaller](https://pyinstaller.org/) | GPL-2.0 + bootloader exception | **Build tool only** — not distributed in the exe |
-
-The shipped `FreeDM.exe` therefore contains only permissive-licensed
-components, which are compatible with the PolyForm Noncommercial terms.
-Review this table before publishing a new build.
-
-## Limitations
-
-- Servers that block Range requests fall back to single-thread (no speedup).
-- Streaming video (HLS/DASH) is not a single file and is not supported yet.
-- Speed depends on the server; more connections help only on servers that
-  allow them.
-- The default filename comes from `Content-Disposition` or the URL path.
-- Queue metadata is stored in plain text in `%APPDATA%\FreeDM\freedm.db`;
-  cookies passed via the API are not persisted across restarts.
-- Connection budgets are assigned when a job starts (static thread count), not
-  rebalanced while it runs.
-- Speed limits are per download; **Global Limit...** caps the combined speed
-  of all downloads, but there is no time-of-day bandwidth schedule.
-- Browser handoff is Chrome/Edge only; the token is pasted once into the
-  extension options, incognito downloads stay in the browser, and the app is not
-  auto-launched from the browser.
-
-## Roadmap (not yet implemented)
-
-Firefox extension, native-messaging auto-launch, right-click "Download with
-FreeDM", FTP, proxy auth, video grabber.
-
-For the full, maintained backlog see [`docs/MILESTONE_2.md`](docs/MILESTONE_2.md)
-and [`docs/ROADMAP.md`](docs/ROADMAP.md).
+PolyForm Noncommercial 1.0.0 — see [LICENSE](LICENSE) and [NOTICE](NOTICE).

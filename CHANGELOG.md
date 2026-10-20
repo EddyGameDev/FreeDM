@@ -89,6 +89,42 @@ First public build.
 - The windowed build has no console, so CLI progress is silent in the
   packaged app.
 
+## [v1.8.0] - 2026-10-20
+
+The engine and the window are split into focused modules, and the front page
+of the repository is brought up to date.
+
+### Build
+
+- `FreeDM-1.8.0.exe` - Windows x64, single file, no installer (18 MB).
+- SHA-256: `BUILD_HASH_v1_8_0`
+- Verify with: `certutil -hashfile FreeDM-1.8.0.exe SHA256`
+- `FreeDM-cli.exe` - the console build. SHA-256: `BUILD_HASH_CLI_18`
+- `FreeDM-Setup-1.8.0.exe` - the installer. SHA-256: `BUILD_HASH_SETUP_18`
+- Source: <https://github.com/EddyGameDev/FreeDM>
+
+### Changed
+
+- **`freedm/engine.py` (1618 lines) is now the `freedm/engine/` package** -
+  twelve modules, one per concern: the class itself, the download loops, the
+  piece work queue, the HTTP side, the destination and resume state, the
+  playlist path, the verification, the limiters, the constants, the errors
+  and the formatting. The largest is 420 lines.
+- **`freedm/gui.py` (1502 lines) is now the `freedm/gui/` package** - the
+  window, the dialogs, the automation, the browser handoff and the names.
+  The largest is 649 lines.
+- **The public API is unchanged.** `from freedm.engine import Download` and
+  `from freedm.gui import run_gui` work exactly as before, so nothing outside
+  the project needed changing.
+- The **README** - the page the repository shows - was rewritten: it now
+  describes what the app actually does, and the download section points at
+  the *latest* release instead of a version number that goes out of date.
+
+### Notes
+
+- A few tests patched internal names of the old flat modules; those patch
+  targets moved with the code. The behaviour they check is unchanged.
+
 ## [v1.7.0] - 2026-10-20
 
 Release polish: the program answers `--version`, the version lives in one

@@ -30,7 +30,24 @@ F:\OMNI Config\Plan\FreeDM\
 │   ├── __init__.py             # package marker + version
 │   ├── __main__.py              # `python -m freedm`
 │   ├── main.py                 # entry point: GUI / CLI / self-tests / native host
-│   ├── engine.py               # download engine (the core)
+│   ├── engine\                  # the download engine
+│   │   ├── download.py          # the Download class
+│   │   ├── workers.py           # the loops, the monitor, the probe
+│   │   ├── segments.py          # the pieces and the work queue
+│   │   ├── network.py           # the session, cookies, mirrors
+│   │   ├── files.py             # the destination and the resume state
+│   │   ├── streaming.py         # HLS/DASH playlists
+│   │   ├── verification.py      # the size and checksum checks
+│   │   ├── limits.py             # the speed limiters
+│   │   ├── constants.py         # the tunables and the statuses
+│   │   ├── errors.py            # the exceptions
+│   │   └── formatting.py        # sizes, speeds and file names
+│   ├── gui\                     # the window
+│   │   ├── app.py               # the window itself
+│   │   ├── dialogs.py           # the dialogs
+│   │   ├── automation.py        # the window, shut-down, categories
+│   │   ├── browser.py           # the control server and the extension
+│   │   └── constants.py         # the names the window shows
 │   ├── store.py                # SQLite persistent queue
 │   ├── scheduler.py             # active/connection/host caps + FIFO queue
 │   ├── settings.py              # typed settings over the DB settings table
@@ -41,7 +58,6 @@ F:\OMNI Config\Plan\FreeDM\
 │   ├── network.py              # proxy, IPv4/IPv6 preference, mirror URLs
 │   ├── native_host.py          # native messaging host
 │   ├── control_server.py       # loopback browser-handoff endpoint
-│   └── gui.py                  # Tkinter GUI
 ├── LICENSE                     # PolyForm Noncommercial 1.0.0 (full text)
 ├── NOTICE                      # copyright notice / Required Notice line
 ├── CHANGELOG.md                # per-build patch notes (source of truth)
@@ -108,7 +124,7 @@ Not copied into `Plan\`: the `build\` folder (PyInstaller intermediates) and
 
 ## 2. Source files in detail
 
-### `freedm/engine.py` — download engine
+### `freedm/engine/` — the download engine
 The heart of the app. No UI dependencies; usable on its own.
 
 | Symbol | Kind | Purpose |
@@ -423,7 +439,7 @@ normalised job to `on_add`, and the GUI creates a regular `Download`.
 | `options.html` / `options.js` | port + token settings, connection test |
 | `README.md` | install steps (Load unpacked + paste token) |
 
-### `freedm/gui.py` — Tkinter front-end
+### `freedm/gui/` — the window
 | Symbol | Purpose |
 |---|---|
 | `App` | main window; owns `downloads` list and `rows` (tree-id → Download) |
@@ -639,23 +655,23 @@ the DB to reset the queue and preferences (partial files remain).
 
 | I want to change… | Edit |
 |---|---|
-| Download logic, retries, segmentation | `freedm\engine.py` |
-| Speed limiting (live per-download cap) | `freedm\engine.py` → `RateLimiter`, `Download.set_speed_limit` |
-| The shared (all-downloads) speed cap | `freedm\engine.py` → `set_global_speed_limit` |
-| Segmentation / piece splitting | `freedm\engine.py` → `_claim_piece`, `_split_piece`, `_piece_target` |
+| Download logic, retries, segmentation | `freedm\engine\` |
+| Speed limiting (live per-download cap) | `freedm\engine\` → `RateLimiter`, `Download.set_speed_limit` |
+| The shared (all-downloads) speed cap | `freedm\engine\` → `set_global_speed_limit` |
+| Segmentation / piece splitting | `freedm\engine\` → `_claim_piece`, `_split_piece`, `_piece_target` |
 | Preferences / stored defaults | `freedm/settings.py` (+ `freedm/store.py` `settings` table) |
 | Batch URL parsing / clipboard detection | `freedm/batch.py` |
 | Categories, list filter, queue export/import | `freedm/categories.py` |
 | Size/checksum verification, orphan cleanup | `freedm/verify.py` |
-| Resume state format | `freedm\engine.py` → `_save_state` / `_load_state` |
-| Cookies / request headers | `freedm\engine.py` → `_apply_cookies`, `_session_headers` |
-| Redirect handling | `freedm\engine.py` → `_probe`, `_request_url`, `final_url` |
+| Resume state format | `freedm\engine\` → `_save_state` / `_load_state` |
+| Cookies / request headers | `freedm\engine\` → `_apply_cookies`, `_session_headers` |
+| Redirect handling | `freedm\engine\` → `_probe`, `_request_url`, `final_url` |
 | Queue persistence / DB schema | `freedm\store.py` → `JobStore` |
-| Restore/auto-resume behaviour | `freedm\gui.py` → `_restore_jobs` |
+| Restore/auto-resume behaviour | `freedm\gui\` → `_restore_jobs` |
 | Concurrency caps / queue order | `freedm\scheduler.py` → `Scheduler` |
 | Browser handoff endpoint / token | `freedm\control_server.py` |
 | Browser extension behaviour | `extension\background.js` (manifest in `extension\manifest.json`) |
-| GUI layout or buttons | `freedm\gui.py` |
+| GUI layout or buttons | `freedm\gui\` |
 | Adding a new CLI flag | `freedm\main.py` → `main`/`cli_download` |
 | How the exe is packaged | `build.ps1` (entry point `freedm\main.py`) |
 | Test server behaviour | `tests/range_server.py` |

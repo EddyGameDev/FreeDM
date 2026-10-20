@@ -1,5 +1,5 @@
 {
-  "version": "1.7.0",
+  "version": "1.8.0",
   "url": "https://github.com/EddyGameDev/FreeDM/releases",
   "notes": "Security round two: a playlist can no longer send your Authorization header to another host, may only name http(s) URLs and may not reach private addresses; the native host names the extension that may call it; category folder names are sanitised."
 }

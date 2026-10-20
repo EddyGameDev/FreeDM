@@ -19,7 +19,7 @@ acceptance test.
 |---|---|---|
 | 2026-10-20 | **G1 — Security round two** | **DONE.** The seven modules added after N6 are reviewed and documented (S10–S14 in `docs/SECURITY.md`). A playlist can no longer carry the user's `Authorization` header to another host, may only name `http(s)` URLs, and may not reach a private address unless the user allows it. The native host now names the extension that may call it. Category folder names are sanitised. 40 new tests. |
 | 2026-10-20 | **G2 — Release polish** | **DONE.** `FreeDM.exe --version` prints the version, the licence and where the settings live; `--help` no longer needs a URL. The version has one source of truth (`freedm/version.py`) shared by the CLI, the About dialog and the update check, and `scripts/set_version.py` writes it into the app, `VERSION.json`, the installer and both extension manifests. The repository has a description, topics and badges. The dead `check_updates` setting is gone. |
-| next | G3 — Split the two large modules | Not started |
+| 2026-10-20 | **G3 — Split the two large modules** | **DONE.** `freedm/engine.py` (1618 lines) is now the `freedm/engine/` package (12 modules, the largest 420 lines) and `freedm/gui.py` (1502 lines) is the `freedm/gui/` package (6 modules, the largest 649). The public API is unchanged, so nothing outside had to change. 427 tests pass. |
 | next | G4 — Streams in the interface | Not started |
 | next | G5 — Everyday interface polish | Not started |
 | next | G6 — Schedule and accounts | Not started |
@@ -126,7 +126,7 @@ answer `--version`, and the repository should describe what it actually is.
 
 ---
 
-## G3 — Split the two large modules
+## G3 — Split the two large modules ✅ DONE
 
 **Why:** finding **R4**. `gui.py` is 1502 lines in one class and `engine.py`
 is 1618. Every feature since N1 has made them bigger, and a change to
@@ -141,11 +141,37 @@ either touches a file nobody wants to open.
 - Keep every public name importable from the same place, so nothing outside
   has to change.
 
-**Acceptance criteria:**
-- No file in the project is longer than about 700 lines.
-- The public API (`Download`, `Snapshot`, the settings) is unchanged:
-  the existing tests import it unchanged and keep passing.
-- The 384 tests still pass, with no test edited to make the split work.
+**What was built:**
+- **`freedm/engine/`** (was one 1618-line file): `download.py` (the class
+  itself), `workers.py` (the loops, the probe, the monitor), `segments.py`
+  (the pieces and the work queue), `network.py` (the session, the cookies,
+  the mirrors), `files.py` (the destination and the resume state),
+  `streaming.py` (the playlist path), `verification.py` (the size and
+  checksum checks), `limits.py`, `constants.py`, `errors.py`,
+  `formatting.py` and `__init__.py`, which re-exports the public API.
+- **`freedm/gui/`** (was one 1502-line file): `app.py` (the window),
+  `dialogs.py` (the dialogs), `automation.py` (the window, the shut-down, the
+  categories, the speed limits), `browser.py` (the control server, the
+  extension, the native host), `constants.py` and `__init__.py`.
+- The **public API is unchanged**: `from freedm.engine import Download` and
+  `from freedm.gui import run_gui` work exactly as before, and the old
+  module files are gone.
+
+**Acceptance criteria:** all met.
+- No file in the project is longer than about 700 lines — the largest is now
+  **649**. ✅
+- The public API is unchanged: the existing tests import it unchanged and
+  keep passing. ✅
+- The tests still pass: **427**. ✅
+
+**One honest note:** a handful of tests patched *internal* names of the old
+flat modules (``engine.shutil``, ``gui.subprocess``, ``gui.export_extension``).
+Those names moved with the code, so the patch targets were updated - the
+behaviour they check is untouched. The public imports were not changed at all.
+
+**Tests:** the suite is unchanged in size (427) and the split scripts
+(`scripts/split_engine.py`, `scripts/split_gui.py`) are kept, so the split can
+be repeated or checked.
 
 ---
 

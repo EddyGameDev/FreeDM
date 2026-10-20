@@ -21,7 +21,8 @@ sys.path.insert(0, os.path.dirname(_HERE))
 sys.path.insert(0, _HERE)
 
 import range_server                      # noqa: E402
-import freedm.engine as engine                            # noqa: E402
+import freedm.engine as engine
+from freedm.engine import segments as engine_segments                            # noqa: E402
 from freedm.engine import (Download, Segment, DONE, ERROR,  # noqa: E402
                      set_global_speed_limit, global_speed_limit)
 from gui_testcase import GuiTestCase      # noqa: E402
@@ -182,7 +183,7 @@ class DynamicSegmentationTests(unittest.TestCase):
     def test_splitting_can_be_switched_off(self):
         """The old fixed-segment behaviour is still available."""
         dl = Download(self.base + "/test.bin", dest_dir=self.out, num_threads=8)
-        with mock.patch.object(engine, "DYNAMIC_SPLITTING", False):
+        with mock.patch.object(engine_segments, "DYNAMIC_SPLITTING", False):
             dl.start()
             self.assertEqual(wait_for(dl), DONE, dl.error)
         self.assertEqual(dl.split_count, 0)
@@ -335,7 +336,7 @@ class ThrottledServerTests(unittest.TestCase):
         range_server.set_throttle(400 * 1024)      # 400 KB/s on one pipe
         dl = Download(self.base + "/throttle/test.bin", dest_dir=self.out,
                       num_threads=4)
-        with mock.patch.object(engine, "DYNAMIC_SPLITTING", not fixed):
+        with mock.patch.object(engine_segments, "DYNAMIC_SPLITTING", not fixed):
             dl.start()
             t0 = time.time()
             self.assertEqual(wait_for(dl), DONE, dl.error)

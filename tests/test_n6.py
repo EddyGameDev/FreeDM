@@ -368,7 +368,7 @@ class GuiIntegrationTests(GuiTestCase):
         self.app._toggle_shutdown()
         with mock.patch.object(self.tk.messagebox, "askyesno",
                                return_value=False) as ask:
-            with mock.patch("freedm.gui.subprocess.Popen") as popen:
+            with mock.patch("freedm.gui.app.subprocess.Popen") as popen:
                 self.app._check_shutdown_when_done()
         self.assertTrue(ask.called)
         self.assertFalse(popen.called, "must not power off without a yes")
@@ -378,7 +378,7 @@ class GuiIntegrationTests(GuiTestCase):
         self.app._toggle_shutdown()
         with mock.patch.object(self.tk.messagebox, "askyesno",
                                return_value=True):
-            with mock.patch("freedm.gui.subprocess.Popen") as popen:
+            with mock.patch("freedm.gui.app.subprocess.Popen") as popen:
                 self.app._check_shutdown_when_done()
         self.assertTrue(popen.called)
 

@@ -227,7 +227,7 @@ class GuiIntegrationTests(GuiTestCase):
 
     def test_export_for_firefox_uses_the_firefox_manifest(self):
         folder = os.path.join(self.tmp, "ff")
-        with mock.patch("freedm.gui.export_extension",
+        with mock.patch("freedm.gui.browser.export_extension",
                         return_value=folder) as export:
             # `_open` would start Explorer: never do that in a test.
             with mock.patch.object(self.app, "_open"):
@@ -238,7 +238,7 @@ class GuiIntegrationTests(GuiTestCase):
 
     def test_export_for_chrome_uses_the_chrome_manifest(self):
         folder = os.path.join(self.tmp, "cr")
-        with mock.patch("freedm.gui.export_extension",
+        with mock.patch("freedm.gui.browser.export_extension",
                         return_value=folder) as export:
             with mock.patch.object(self.app, "_open"):
                 with mock.patch.object(self.tk.messagebox, "showinfo"):
@@ -247,7 +247,7 @@ class GuiIntegrationTests(GuiTestCase):
         self.assertEqual(export.call_args.kwargs.get("browser"), "chrome")
 
     def test_installing_the_native_host_reports_the_result(self):
-        with mock.patch("freedm.gui.native_host.install_host",
+        with mock.patch("freedm.gui.browser.native_host.install_host",
                         return_value=(True, "installed ok")) as install:
             with mock.patch.object(self.tk.messagebox, "showinfo") as info:
                 self.app._install_native_host()
@@ -255,7 +255,7 @@ class GuiIntegrationTests(GuiTestCase):
         self.assertTrue(info.called)
 
     def test_uninstalling_the_native_host_reports_the_result(self):
-        with mock.patch("freedm.gui.native_host.uninstall_host",
+        with mock.patch("freedm.gui.browser.native_host.uninstall_host",
                         return_value=(True, "removed")) as remove:
             with mock.patch.object(self.tk.messagebox, "showinfo") as info:
                 self.app._uninstall_native_host()

@@ -125,6 +125,7 @@ limited. **Planned** = not yet built (see `ROADMAP.md`).
 | A114 | The native host names the extension that may call it | Implemented (G1) | `freedm/native_host.py` → `extension_origins` |
 | A115 | `--version` prints the version, licence and settings folder | Implemented (G2) | `freedm/main.py`; `freedm/version.py` |
 | A116 | One version for the app, the installer, the extension and the update check | Implemented (G2) | `freedm/version.py`; `scripts/set_version.py` |
+| A117 | The engine and the window are split into focused modules | Implemented (G3) | `freedm/engine/`; `freedm/gui/` |
 
 ### Segment sizing rules (`freedm/engine.py`)
 - Files ≤ `MIN_SEGMENT_SIZE` (1 MB) are downloaded as a single stream.
@@ -286,7 +287,7 @@ results do not depend on third-party sites.
 | **N10 suite: `tests/test_n10.py` (24 tests)** | **Pass** |
 | **Security suite 2: `tests/test_security2.py` (40 tests)** | **Pass** |
 | The app, the installer, `VERSION.json` and the extension report the same version | Pass |
-| The whole suite runs with `python -m pytest` | Pass — 424 tests |
+| The whole suite runs with `python -m pytest` | Pass — 427 tests |
 | **Changelog suite: `tests/test_changelog.py` (11 tests)** | **Pass** |
 | A future start time holds the job in `scheduled` | Pass — released when the time comes |
 | A closed window blocks every start; Start Now overrides it | Pass |
