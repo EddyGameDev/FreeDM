@@ -1,7 +1,9 @@
 # FreeDM — Milestone 2: Everyday polish → engine strength
 
-**Status:** 2026-10-20 · **N1–N10 done — Milestone 2 complete** · Companion to
-[`NEXT_GOAL.md`](NEXT_GOAL.md) (Milestone 1 — **complete**) and
+**Status:** 2026-10-20 · **N1–N10 done — Milestone 2 complete** · The next
+goals are in [`MILESTONE_3.md`](MILESTONE_3.md). Companion to
+[`NEXT_GOAL.md`](NEXT_GOAL.md) (Milestone 1 — **complete**),
+[`REVIEW.md`](REVIEW.md) (the project review) and
 [`ROADMAP.md`](ROADMAP.md) (full backlog).
 
 > **Published:** <https://github.com/EddyGameDev/FreeDM> — source-available
@@ -518,6 +520,10 @@ playlist parsers, page sniffing, and end-to-end downloads of an HLS stream, a
 master playlist, a DASH manifest and an encrypted stream, plus a resume).
 
 ---
+
+> **Milestone 2 is complete.** The project was reviewed afterwards
+> ([`REVIEW.md`](REVIEW.md)) and the next goals are planned in
+> [`MILESTONE_3.md`](MILESTONE_3.md).
 
 ## Definition of done (Milestone 2)
 

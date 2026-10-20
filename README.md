@@ -294,7 +294,9 @@ FreeDM/
 ## Security
 
 FreeDM was reviewed for security on 2026-10-19; the findings and the fixes
-are in [`docs/SECURITY.md`](docs/SECURITY.md). The short version:
+are in [`docs/SECURITY.md`](docs/SECURITY.md), and the whole project was
+reviewed again on 2026-10-20 in [`docs/REVIEW.md`](docs/REVIEW.md). The
+short version:
 
 - The control server listens on `127.0.0.1` only, requires a 256-bit token
   for every state-changing request, rejects a `Host` header that is not
@@ -308,6 +310,13 @@ are in [`docs/SECURITY.md`](docs/SECURITY.md). The short version:
 - The queue database, the control token and the proxy password are stored in
   plain text under `%APPDATA%\FreeDM`. On a shared Windows account, other
   users of that account can read them.
+
+## Where things stand
+
+[`docs/MILESTONE_2.md`](docs/MILESTONE_2.md) records the finished work
+(N1–N10). [`docs/MILESTONE_3.md`](docs/MILESTONE_3.md) holds the plan for
+what comes next, and [`docs/REVIEW.md`](docs/REVIEW.md) is the review it
+comes from.
 
 ## Changelog and release notes
 

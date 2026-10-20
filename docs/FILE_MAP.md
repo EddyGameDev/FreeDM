@@ -50,6 +50,7 @@ F:\OMNI Config\Plan\FreeDM\
 ├── icon.ico                     # the application icon (generated)
 ├── VERSION.json                 # the file the update check reads
 ├── pytest.ini / conftest.py    # the one-command test run
+├── requirements-dev.txt     # test-only dependencies
 ├── .github\workflows\ci.yml    # CI: tests on 3 systems + the build
 ├── installer\FreeDM.iss        # the Inno Setup installer (compiles with iscc)
 ├── scripts\
@@ -60,7 +61,9 @@ F:\OMNI Config\Plan\FreeDM\
 │   ├── FEATURES.md             # every feature + status + location
 │   ├── FILE_MAP.md             # this file
 │   ├── ROADMAP.md              # future improvements (long-term backlog)
-│   ├── MILESTONE_2.md          # sequenced next goals N1-N10 + progress
+│   ├── MILESTONE_2.md          # the completed N1-N10 record
+│   ├── MILESTONE_3.md          # the next goals (G1-G7)
+│   ├── REVIEW.md              # the project review of 2026-10-20
 │   ├── SECURITY.md             # the security review and its findings
 │   ├── NEXT_GOAL.md            # Milestone 1 record (W1-W5, complete)
 │   └── PROJECT_PLAN.md         # original research/plan document
@@ -317,7 +320,7 @@ message.
 | `launch_app()` | start the GUI in the background |
 | `read_message()` / `write_message()` | the length-prefixed JSON wire format |
 | `main()` | the `--native-host` entry point |
-### `security.md` / `docs/SECURITY.md`
+### `SECURITY.md`
 The security review of 2026-10-19: every finding, what was checked, what was
 found and what was fixed, plus the rules future changes must keep. The
 regressions are pinned by `tests/test_security.py`.

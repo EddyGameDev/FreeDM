@@ -1,9 +1,9 @@
 # FreeDM — Future Improvement Plan
 
-> **Start with `MILESTONE_2.md`** for the sequenced *next* goals (N1–N10) and
-> current progress. **`NEXT_GOAL.md`** is the completed Milestone 1 record
-> (browser handoff, sessions/cookies, persistent queue, polite concurrency).
-> This file is the longer-term backlog behind both.
+> **Start with `MILESTONE_3.md`** for the next goals (G1–G7) and
+> [`REVIEW.md`](REVIEW.md) for the review they come from. `MILESTONE_2.md` is
+> the completed N1–N10 record and `NEXT_GOAL.md` the completed Milestone 1
+> record. This file is the longer-term backlog behind all of them.
 >
 > **Progress:** Milestone 1 is **done** — W5 (resume integrity, overwrite
 > policy, disk-space precheck, Range-loss fallback), W2 (session/cookie/header
@@ -156,7 +156,8 @@ Effort is rough developer time: **S** ≈ ≤1 day, **M** ≈ 2–4 days,
    — the work queue re-divides the pending pieces as workers finish.
 6. ~~**In-memory only:** closing the app loses the queue.~~ **Fixed in W3**
    (SQLite queue + auto-resume); manual ordering/caps remain (W4).
-7. **No `.gitignore`** in the copied project.
+7. ~~**No `.gitignore`** in the copied project.~~ **Fixed** — the repository
+   has one (it also keeps the build artefacts and stray `*.part` files out).
 8. ~~**GUI error text is truncated** to 40 characters in the status column.~~
    **Fixed in N1** — the **Details...** dialog shows the full text; the column
    keeps a short preview by design.
@@ -165,18 +166,19 @@ Effort is rough developer time: **S** ≈ ≤1 day, **M** ≈ 2–4 days,
 
 ## Suggested next milestone
 
-**Current: see `MILESTONE_2.md`.** Goals N1–N10 are already sequenced there;
-N1 is done and N2 (batch input & clipboard) is next. The old short list was:
+**Current: see [`MILESTONE_3.md`](MILESTONE_3.md).** Milestone 2 (N1–N10) is
+done; the review that follows it is in [`REVIEW.md`](REVIEW.md). The old short
+list was:
 
 1. ~~P0.1 overwrite/rename policy~~ (done, W5)
 2. ~~P0.2 settings persistence~~ (done, N1)
 3. ~~P0.3 per-download speed limit in the GUI~~ (done, N1)
-4. P0.6 separate console build
+4. ~~P0.6 separate console build~~ (done, N9)
 5. ~~P1.1 queue with concurrency limit~~ (done, W4)
 6. ~~P3.1 SQLite history + queue~~ (done, W3)
 7. ~~P4.4 local control server, then P4.1 browser extension~~ (done, W1)
-8. P5.1 dynamic segmentation
-9. P7.5 pytest suite
+8. ~~P5.1 dynamic segmentation~~ (done, N4)
+9. ~~P7.5 pytest suite~~ (done, N9)
 
 ---
 
