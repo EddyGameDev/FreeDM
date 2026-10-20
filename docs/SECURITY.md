@@ -29,7 +29,7 @@ Every finding is pinned by a test, so it cannot come back unnoticed.
 
 ---
 
-## 2. What was checked, and what it showed
+## 2. Round one — what was checked, and what it showed
 
 ### 2.1 The loopback control server (`freedm/control_server.py`)
 
@@ -153,7 +153,7 @@ extension (`.exe`, `.bat`, `.cmd`, `.com`, `.ps1`, `.vbs`, `.js`, `.jar`,
 | Dependency licences | **Good** — all permissive (Apache-2.0 / MIT / BSD-3 / MPL-2.0); PyInstaller is a build tool only |
 | The `dist/` build | **Good** — the published SHA-256 is in the release notes |
 
-### 2.6 Not covered
+### 2.6 Not covered in round one
 
 - The threat model assumes a **single-user, non-shared** Windows account. On
   a shared account the plain-text token, proxy password and queue database are
@@ -162,14 +162,18 @@ extension (`.exe`, `.bat`, `.cmd`, `.com`, `.ps1`, `.vbs`, `.js`, `.jar`,
 - The app does not verify TLS certificates out of the box — it does, but the
   API allows turning it off, and the GUI does not expose that switch.
 
-## 7. Round two — the modules added after N6 (2026-10-20)
+**Round one did not cover the modules added afterwards** (the network
+options, the native host, the update check, the log file, streaming, the AES
+code and the category rules). They are reviewed in §3.
+
+## 3. Round two — the modules added after N6 (2026-10-20)
 
 The first review covered the code up to N6. Seven modules were added after it
 and had never been looked at: `network.py`, `native_host.py`, `update.py`,
 `logsetup.py`, `stream.py`, `aes.py` and `categories.py`. They are reviewed
 here.
 
-### 2.7 The streaming path (`freedm/stream.py`, the engine's stream branch)
+### 3.1 The streaming path (`freedm/stream.py`, the engine's stream branch)
 
 A playlist is **data from a third party**: the user chooses the playlist's
 address, but the playlist decides where the *segments* come from. That is a
@@ -196,7 +200,7 @@ control server) and make it fetch it.
   A name is resolved once and the answer cached, so a host that points at the
   local network is caught too.
 
-### 2.8 The native messaging host (`freedm/native_host.py`)
+### 3.2 The native messaging host (`freedm/native_host.py`)
 
 The host is started by the browser and can do exactly one thing: start
 FreeDM.
@@ -219,7 +223,7 @@ only**. The wildcard remains as the fallback, and the manifest carries a
 `_note` saying so - so anyone reading the file can see that the host is
 open until the extension has talked to FreeDM once.
 
-### 2.9 The update check (`freedm/update.py`)
+### 3.3 The update check (`freedm/update.py`)
 
 | Check | Result |
 |---|---|
@@ -232,7 +236,7 @@ accepted any URL, so a mistake (or a bad call) could have pointed it anywhere.
 **Fixed:** the URL is fixed to the project's own file; the function no longer
 takes one.
 
-### 2.10 The log file (`freedm/logsetup.py`)
+### 3.4 The log file (`freedm/logsetup.py`)
 
 | Check | Result |
 |---|---|
@@ -241,7 +245,7 @@ takes one.
 | How big does it get | 2 MB, then it rotates; three old files are kept |
 | What does it hold | The app's own events - **never** URLs, file names, cookies or tokens (a test checks the source) |
 
-### 2.11 The proxy (`freedm/network.py`)
+### 3.5 The proxy (`freedm/network.py`)
 
 | Check | Result |
 |---|---|
@@ -256,7 +260,7 @@ name was also configured, and the path was rebuilt by hand. **Fixed:** the URL
 is parsed properly, any existing userinfo is replaced rather than appended
 to, and the path is kept.
 
-### 2.12 The category rules (`freedm/categories.py`)
+### 3.6 The category rules (`freedm/categories.py`)
 
 **S12 (Medium) — a category name was used as a folder name, unsanitised.**
 The rules are the user's own, but the name becomes a *folder*, so a rule
@@ -268,7 +272,7 @@ a confusing error.
 Windows, removes `..` and falls back to `Other`. A test checks that the
 destination always stays inside the base folder.
 
-### 2.13 The AES code (`freedm/aes.py`)
+### 3.7 The AES code (`freedm/aes.py`)
 
 | Check | Result |
 |---|---|
