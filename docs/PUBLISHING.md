@@ -70,11 +70,12 @@ Credential Manager, so `git push` works without any token in the remote URL.
 # 1. write the notes for the new version in CHANGELOG.md
 #    (### Build with the file name, size and SHA-256, then Added/Changed/Fixed)
 
-# 2. build it
+# 2. build it (produces dist\FreeDM.exe AND dist\FreeDM-cli.exe)
 powershell -ExecutionPolicy Bypass -File build.ps1   # entry point: freedm\main.py
 
-# 3. record the real hash in CHANGELOG.md
-certutil -hashfile dist\FreeDM.exe SHA256
+# 3. record the real hashes in CHANGELOG.md
+python scripts\release_notes.py --hash dist\FreeDM.exe
+python scripts\release_notes.py --hash dist\FreeDM-cli.exe
 
 # 4. commit, tag and push
 git add -A
@@ -86,8 +87,9 @@ git push origin v1.1.0
 # 5. generate the release notes from the changelog
 python scripts\release_notes.py v1.1.0 --file notes.md
 
-# 6. create the release and attach the exe
-gh release create v1.1.0 dist\FreeDM.exe --title "FreeDM v1.1.0" --notes-file notes.md
+# 6. create the release and attach the exes
+gh release create v1.1.0 dist\FreeDM.exe dist\FreeDM-cli.exe \
+    --title "FreeDM v1.1.0" --notes-file notes.md
 ```
 
 The notes file from step 5 is what goes on the release page. Always put the

@@ -1,2 +1,9 @@
+# Runtime
 requests>=2.28
+
+# Build (the packaged app)
 pyinstaller>=6.0
+
+# Build (the icon) and test
+pillow>=10.0
+pytest>=7.0

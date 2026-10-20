@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# The whole suite is free to run: no secrets, no paid services.
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install requests pytest
+
+      # The GUI suites skip themselves when there is no display or no Tk.
+      - name: Run the test suite
+        run: python -m pytest -v
+
+  build:
+    name: Build the Windows app
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install requests pyinstaller pillow
+
+      - name: Build FreeDM.exe and FreeDM-cli.exe
+        shell: pwsh
+        run: ./build.ps1
+
+      - name: Verify the built app
+        shell: pwsh
+        run: |
+          Start-Process -FilePath python `
+            -ArgumentList "tests\range_server.py","8765","10" -WindowStyle Hidden
+          Start-Sleep -Seconds 3
+          $env:FREEDM_HOME = "$env:RUNNER_TEMP\freedm_home"
+          ./dist/FreeDM.exe --selftest `
+            "http://127.0.0.1:8765/test.bin" "$env:RUNNER_TEMP\selftest"
+          if ($LASTEXITCODE -ne 0) { throw "the frozen build failed its self-test" }
+          ./dist/FreeDM.exe --browser-selftest "$env:RUNNER_TEMP\selftest2"
+          if ($LASTEXITCODE -ne 0) { throw "the browser self-test failed" }
+          Get-Content "$env:RUNNER_TEMP\selftest\selftest_result.txt"
+
+      - name: Upload the builds
+        uses: actions/upload-artifact@v4
+        with:
+          name: FreeDM-windows
+          path: |
+            dist/FreeDM.exe
+            dist/FreeDM-cli.exe
+          if-no-files-found: error

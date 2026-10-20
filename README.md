@@ -129,15 +129,57 @@ simply stays in the browser.
 
 ## Command line
 
-The same exe also works from a terminal:
+The same program also works from a terminal:
 
 ```
-FreeDM.exe "https://example.com/big.iso" -o C:\Downloads -t 16
-FreeDM.exe "https://example.com/big.iso" --limit 2000000   # 2 MB/s cap
+FreeDM-cli.exe "https://example.com/big.iso" -o C:\Downloads -t 16
+FreeDM-cli.exe "https://example.com/big.iso" --limit 2000000   # 2 MB/s cap
 ```
 
-(Note: the windowed build prints nothing to a console; use the source build
-below if you want live CLI progress.)
+`FreeDM-cli.exe` is the **console build**: it prints live progress. The
+normal `FreeDM.exe` is a windowed app and cannot print anything (it has no
+console attached).
+
+## Installing
+
+The portable build needs nothing: download `FreeDM-1.4.0.exe` and run it.
+Your queue and settings live in `%APPDATA%\FreeDM` — nothing is written to
+the registry, so the program can be deleted by simply removing the file.
+
+If you prefer an installer, `installer/FreeDM.iss` is a ready-made
+[Inno Setup](https://jrsoftware.org/isdl.php) script (Inno Setup is free).
+It installs both executables, the licence and the browser extension, adds
+Start-menu and optional desktop shortcuts, and adds an uninstaller. The
+uninstaller never deletes your queue.
+
+## About, updates and the log file
+
+**About FreeDM...** shows the version and has two optional extras:
+
+- **Check for updates** - reads one small public `VERSION.json` and tells you
+  whether a newer build exists. It only ever runs when you press the button,
+  and it sends nothing about you.
+- **Write a log file** - a rotating log (2 MB, three old files kept) in
+  `%APPDATA%\FreeDM\freedm.log`, for bug reports. It is off unless you turn
+  it on, and it records the app's own events, never your URLs, file names,
+  cookies or tokens.
+
+## Building from source
+
+```
+python -m pip install -r requirements.txt
+powershell -ExecutionPolicy Bypass -File build.ps1
+```
+
+`build.ps1` builds `dist\FreeDM.exe` (windowed) and `dist\FreeDM-cli.exe`
+(console), and generates `icon.ico` if it is missing.
+
+Run the tests with either:
+
+```
+python -m pytest            # the whole suite in one command
+python tests\test_w1.py     # or one suite at a time
+```
 
 ## How it works
 
@@ -206,11 +248,16 @@ FreeDM/
 ├── scripts/                # release tooling
 ├── docs/                   # documentation
 ├── releases/               # ARCHIVED older builds (see releases/README.md)
+├── installer/              # the Inno Setup installer script
+├── .github/workflows/      # CI: the suite on 3 systems + the Windows build
+├── icon.ico                # the application icon (generated)
+├── VERSION.json            # the file the update check reads
+├── pytest.ini / conftest.py # `python -m pytest` runs everything
 ├── dist/FreeDM.exe         # the built application
 ├── LICENSE                 # PolyForm Noncommercial 1.0.0 (full text)
 ├── NOTICE                  # copyright notice / Required Notice line
 ├── CHANGELOG.md            # per-build patch notes (source of truth)
-├── build.ps1               # rebuild dist\FreeDM.exe
+├── build.ps1               # rebuild FreeDM.exe AND FreeDM-cli.exe
 └── requirements.txt
 ```
 
@@ -249,14 +296,6 @@ python scripts\release_notes.py --hash dist\FreeDM.exe
 
 The same text is used for the GitHub release page, so the notes there always
 match the shipped binary.
-
-## Rebuilding the exe
-
-```
-powershell -ExecutionPolicy Bypass -File build.ps1
-```
-
-Requires Python 3.10+ and PyInstaller. Output lands in `dist\FreeDM.exe`.
 
 ## Testing
 

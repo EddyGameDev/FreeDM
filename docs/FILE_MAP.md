@@ -46,9 +46,15 @@ F:\OMNI Config\Plan\FreeDM\
 ├── NOTICE                      # copyright notice / Required Notice line
 ├── CHANGELOG.md                # per-build patch notes (source of truth)
 ├── .gitignore                  # build artefacts, caches, partial downloads
-├── build.ps1                   # rebuild dist\FreeDM.exe
+├── build.ps1                   # rebuild dist\FreeDM.exe AND FreeDM-cli.exe
+├── icon.ico                     # the application icon (generated)
+├── VERSION.json                 # the file the update check reads
+├── pytest.ini / conftest.py    # the one-command test run
+├── .github\workflows\ci.yml    # CI: tests on 3 systems + the build
+├── installer\FreeDM.iss        # the Inno Setup installer script
 ├── scripts\
-│   └── release_notes.py        # extract a version's notes from CHANGELOG.md
+│   ├── release_notes.py        # extract a version's notes from CHANGELOG.md
+│   └── make_icon.py            # generate icon.ico
 ├── docs\
 │   ├── OVERVIEW.md             # what it is, scope, how it works
 │   ├── FEATURES.md             # every feature + status + location

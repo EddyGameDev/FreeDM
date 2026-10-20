@@ -89,6 +89,48 @@ First public build.
 - The windowed build has no console, so CLI progress is silent in the
   packaged app.
 
+## [v1.4.0] - 2026-10-20
+
+Packaging and quality: a console build, an icon, an installer script, CI, an
+opt-in update check and an opt-in log file.
+
+### Build
+
+- `FreeDM-1.4.0.exe` - Windows x64, single file, no installer (17.9 MB).
+- SHA-256: `d7f1a4fc61e68797e1b74b8c4c644720e3122b750dbfc4aafde14743f963ef26`
+- Verify with: `certutil -hashfile FreeDM-1.4.0.exe SHA256`
+- `FreeDM-cli.exe` - the same program with a console attached, so the command
+  line shows live progress. SHA-256: `4a54dcec6a9ceea19180b79f81a21328dd22a3d6b409f8accdacfb1b05acc441`
+- Source: <https://github.com/EddyGameDev/FreeDM>
+
+### Added
+
+- **A console build** (`FreeDM-cli.exe`). The windowed app cannot print
+  anything; this one streams progress in a terminal:
+  `FreeDM-cli.exe "https://example.com/big.iso" -o C:\Downloads -t 16`.
+- **An application icon.** Generated from `scripts/make_icon.py`, so it can be
+  changed and rebuilt at any time; embedded in both executables.
+- **An installer script** (`installer/FreeDM.iss`) for Inno Setup (free). It
+  installs both executables, the licence and the extension, adds Start-menu
+  and optional desktop shortcuts, and registers an uninstaller. Your queue in
+  `%APPDATA%\FreeDM` is never deleted by the uninstaller.
+- **A CI workflow** (`.github/workflows/ci.yml`): the whole test suite runs on
+  Windows, Ubuntu and macOS on every push, and the Windows build is compiled
+  and verified. It uses no secrets and no paid services.
+- **An opt-in update check** in the new **About FreeDM** dialog. It is only
+  ever run when the user presses the button, it reads one small public
+  `VERSION.json`, and it sends no data about the user.
+- **An opt-in log file** (`%APPDATA%\FreeDM\freedm.log`), rotated at 2 MB with
+  three old files kept. It is off unless the user turns it on, and it records
+  the app's own events - never URLs, file names, cookies or tokens.
+
+### Changed
+
+- `pytest` runs the whole suite with one command: `python -m pytest`.
+- The GUI tests skip themselves (instead of failing) on a machine with no
+  display or no Tk, so the suite runs on a headless CI box.
+- `build.ps1` builds both executables and generates the icon if needed.
+
 ## [v1.3.1] - 2026-10-19
 
 Repository reorganisation and an archive of the older builds. No behaviour

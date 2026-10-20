@@ -56,7 +56,10 @@ crashes without losing progress.
   may start, and an optional shut-down when the queue drains.
 - Network options: an HTTP/SOCKS proxy with credentials and a bypass list,
   an IPv4/IPv6 preference, and alternative sources ("mirrors") for a file.
-- A simple CLI and a headless `--selftest` mode.
+- A simple CLI and a headless `--selftest` mode. A separate console build
+  (`FreeDM-cli.exe`) shows live progress in a terminal.
+- An opt-in log file for bug reports and an opt-in (user-triggered) update
+  check.
 - A single-file distributable: `dist\FreeDM.exe`.
 
 ## 2. What this project is NOT (scope — OUT)

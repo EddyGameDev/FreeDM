@@ -38,17 +38,26 @@ class GuiTestCase(unittest.TestCase):
     prefix = "freedm_gui_"
 
     def setUp(self) -> None:
-        import tkinter as tk
         from freedm.store import JobStore
         from freedm import gui
 
+        try:
+            import tkinter as tk
+        except ImportError as exc:
+            # Python built without Tk (some CI images): skip, do not fail.
+            self.skipTest(f"Tk is not available: {exc}")
         self.tk = tk
         self.tmp = tempfile.mkdtemp(prefix=self.prefix)
         self.store = JobStore(os.path.join(self.tmp, "q.db"))
         # No control server in tests: it would bind a real port.
         self.store.set_setting("control_enabled", "0")
-        self.root = tk.Tk()
-        self.root.withdraw()
+        try:
+            self.root = tk.Tk()
+            self.root.withdraw()
+        except tk.TclError as exc:
+            # No usable display (a headless CI box): skip, do not fail.
+            shutil.rmtree(self.tmp, ignore_errors=True)
+            self.skipTest(f"no usable Tk display: {exc}")
         self.app = gui.App(self.root, store=self.store)
         # Safety: a test must never touch the user's Downloads folder and
         # must never start a real download.

@@ -58,6 +58,9 @@ DEFAULTS: dict[str, str] = {
     "proxy_pass": "",           # optional proxy password (plain text!)
     "proxy_bypass": "",         # comma separated hosts that skip the proxy
     "prefer_ipv4": "1",         # prefer IPv4 when a host has both
+    # N9 additions
+    "log_enabled": "0",         # write a rotating log file
+    "check_updates": "0",       # allow the update check (still user-triggered)
 }
 
 #: Keys whose value is an integer.
@@ -65,7 +68,8 @@ _INT_KEYS = frozenset({"max_active", "max_connections", "max_per_host", "threads
                        "cleanup_days"})
 #: Keys whose value is a boolean ("1"/"0").
 _BOOL_KEYS = frozenset({"auto_resume", "control_enabled", "clipboard_monitor",
-                        "auto_sort", "shutdown_when_done", "prefer_ipv4"})
+                        "auto_sort", "shutdown_when_done", "prefer_ipv4",
+                        "log_enabled", "check_updates"})
 #: Keys whose value is a float.
 _FLOAT_KEYS = frozenset({"speed_limit", "global_speed_limit"})
 

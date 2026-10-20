@@ -39,6 +39,8 @@ from freedm.categories import (default_rules, format_rules, load_rules, parse_ru
                         export_queue, import_queue, STATUS_FILTERS)
 from freedm.network import PROXY, install_address_preference, address_preference
 from freedm import native_host
+from freedm import logsetup
+from freedm import update
 from freedm.verify import (ALGORITHMS, parse_checksum, find_orphans, cleanup_orphans)
 from freedm.scheduler import Scheduler
 from freedm.control_server import ControlServer, export_extension, token_path
@@ -104,6 +106,9 @@ class App:
         self.proxy_bypass = (self.prefs.get("proxy_bypass") or "").strip()
         self.prefer_ipv4 = bool(self.prefs.get("prefer_ipv4", True))
         self._apply_network_settings()
+        # N9: the log file is opt-in; it is off unless the user turned it on.
+        self.log_var = tk.BooleanVar(value=bool(self.prefs.get("log_enabled")))
+        logsetup.enable(self.log_var.get())
         self.scheduler = Scheduler(
             int(self.prefs["max_active"]),
             int(self.prefs["max_connections"]),
@@ -555,6 +560,62 @@ class App:
             subprocess.Popen(command)
         except OSError as exc:
             messagebox.showerror(APP_NAME, f"Could not {verb}: {exc}")
+
+    # -- N9: about, updates, logging ----------------------------------------
+    def about_dialog(self) -> None:
+        """Version, licence and the optional update check / log file."""
+        from freedm import __version__
+        win = tk.Toplevel(self.root)
+        win.title("About FreeDM")
+        win.geometry("520x340")
+        win.transient(self.root)
+        pad = {"padx": 12, "pady": 6}
+
+        ttk.Label(win, text="FreeDM", font=("", 13, "bold")).pack(anchor="w",
+                                                                    **pad)
+        ttk.Label(win, text=f"Version {__version__}").pack(anchor="w", **pad)
+        ttk.Label(
+            win,
+            text=("A free, source-available download manager.\n"
+                  "Licensed under the PolyForm Noncommercial License 1.0.0:\n"
+                  "noncommercial use, modification and redistribution."),
+            justify="left",
+        ).pack(anchor="w", **pad)
+
+        ttk.Checkbutton(
+            win, text="Write a log file (for bug reports)",
+            variable=self.log_var, command=self._toggle_log).pack(
+                anchor="w", padx=12, pady=(8, 0))
+        ttk.Label(win, text=f"Log file: {logsetup.log_path()}",
+                  foreground="#555").pack(anchor="w", padx=32)
+
+        status = ttk.Label(win, text="", foreground="#555")
+        status.pack(anchor="w", padx=12, pady=(6, 0))
+
+        btns = ttk.Frame(win, padding=(12, 6, 12, 12))
+        btns.pack(fill="x")
+
+        def check() -> None:
+            status.configure(text="Checking...")
+            win.update_idletasks()
+            newer, message = update.check_for_update(__version__)
+            status.configure(text=message)
+            if newer:
+                self._notify_status("A newer FreeDM is available")
+
+        ttk.Button(btns, text="Check for updates", command=check).pack(
+            side="left")
+        ttk.Button(btns, text="Open the log folder",
+                   command=lambda: self._open(os.path.dirname(
+                       logsetup.log_path()))).pack(side="left", padx=(8, 0))
+        ttk.Button(btns, text="Close", command=win.destroy).pack(side="right")
+
+    def _toggle_log(self) -> None:
+        enabled = self.log_var.get()
+        path = logsetup.enable(enabled)
+        save_settings(self.store, log_enabled=enabled)
+        self.status_var.set(
+            f"Log file {'enabled' if enabled else 'disabled'}: {path}")
 
     # -- N7: network options ------------------------------------------------
     def _apply_network_settings(self) -> None:

@@ -107,6 +107,13 @@ limited. **Planned** = not yet built (see `ROADMAP.md`).
 | A96 | "Download with FreeDM" context menu (link/media/page) | Implemented (N8) | `extension\background.js` → `handleMenuClick` |
 | A97 | Native messaging host that can start the app | Implemented (N8) | `freedm/native_host.py`; `main.py --native-host` |
 | A98 | Register / remove the native host | Implemented (N8) | `freedm/native_host.py` → `install_host`, `uninstall_host` |
+| A99 | Console build with live progress (`FreeDM-cli.exe`) | Implemented (N9) | `build.ps1` (`--console`) |
+| A100 | Application icon, embedded in both executables | Implemented (N9) | `icon.ico`; `scripts/make_icon.py` |
+| A101 | Installer script (Inno Setup) | Implemented (N9) | `installer/FreeDM.iss` |
+| A102 | CI: the suite on Windows/Ubuntu/macOS + the Windows build | Implemented (N9) | `.github/workflows/ci.yml` |
+| A103 | Opt-in update check (user-triggered, one small JSON) | Implemented (N9) | `freedm/update.py`; `VERSION.json` |
+| A104 | Opt-in rotating log file (no URLs, names, cookies or tokens) | Implemented (N9) | `freedm/logsetup.py` |
+| A105 | One-command test run with pytest | Implemented (N9) | `pytest.ini`, `conftest.py` |
 
 ### Segment sizing rules (`freedm/engine.py`)
 - Files ≤ `MIN_SEGMENT_SIZE` (1 MB) are downloaded as a single stream.
@@ -195,6 +202,7 @@ On success both the `.part` and the `.state.json` are removed.
 | B49 | Mirrors... dialog for the selected job | Implemented (N7) |
 | B50 | Confirmation before opening an executable/script | Implemented (security) |
 | B51 | Export for Firefox / install or remove the native host | Implemented (N8) |
+| B52 | About FreeDM dialog (version, update check, log switch) | Implemented (N9) |
 
 Default save folder: `%USERPROFILE%\Downloads`.
 
@@ -261,6 +269,8 @@ results do not depend on third-party sites.
 | **N7 suite: `tests/test_n7.py` (30 tests)** | **Pass** |
 | **Security suite: `tests/test_security.py` (29 tests)** | **Pass** |
 | **N8 suite: `tests/test_n8.py` (32 tests)** | **Pass** |
+| **N9 suite: `tests/test_n9.py` (27 tests)** | **Pass** |
+| The whole suite runs with `python -m pytest` | Pass — 355 tests |
 | **Changelog suite: `tests/test_changelog.py` (11 tests)** | **Pass** |
 | A future start time holds the job in `scheduled` | Pass — released when the time comes |
 | A closed window blocks every start; Start Now overrides it | Pass |

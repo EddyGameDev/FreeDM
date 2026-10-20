@@ -1,6 +1,6 @@
 # FreeDM — Milestone 2: Everyday polish → engine strength
 
-**Status:** started 2026-10-19 · **N1–N8 done** · next: **N9** · Companion to
+**Status:** started 2026-10-19 · **N1–N9 done** · next: **N10** · Companion to
 [`NEXT_GOAL.md`](NEXT_GOAL.md) (Milestone 1 — **complete**) and
 [`ROADMAP.md`](ROADMAP.md) (full backlog).
 
@@ -38,7 +38,7 @@ without re-analysing the code.
 | 2026-10-19 | **N7 — Network options** | **DONE.** New `freedm/network.py`: shared proxy configuration (HTTP/SOCKS, credentials, bypass list), IPv4/IPv6 address preference, mirror URL building. Engine: every request honours the proxy (bypassed hosts get a per-request override), mirrors are tried in turn by the probe and the segment download, and the `mirrors` column is persisted (auto-migrated). GUI: **Network...** dialog with a **Test connection** button, and **Mirrors...** for alternative sources. 30/30 tests. |
 | 2026-10-19 | **N8 — Browser extras** | **DONE.** Firefox build of the extension (event page + gecko id, exported from the same source), a right-click **Download with FreeDM** context menu for links/media/pages, and a native messaging host (`--native-host`) so the extension can start FreeDM when it is closed. 32/32 tests. |
 | 2026-10-19 | **Repository reorganisation** | **DONE.** The application moved into the `freedm/` package (imported as `freedm.<module>`); the root now holds only the extension, tests, docs, release tooling and `releases/`. The builds published before the security fixes (v1.0.0, v1.1.0, v1.2.0) are archived in `releases/` with their hashes and a "superseded" notice. All 15 suites pass, the frozen build was rebuilt and verified. |
-| next | N9 — Packaging & quality | Not started |
+| 2026-10-20 | **N9 — Packaging & quality** | **DONE.** `pytest.ini` + `conftest.py` (355 tests in one command), a console build `FreeDM-cli.exe`, a generated `icon.ico`, an Inno Setup installer script, a CI workflow (tests on Windows/Ubuntu/macOS + the verified Windows build), an opt-in update check and an opt-in rotating log file, both in the new **About FreeDM** dialog. 27/27 N9 tests. |
 | later | N10 — Streaming media | Deferred (large, separate subsystem) |
 
 ---
@@ -55,7 +55,7 @@ without re-analysing the code.
 | N6 | Automation | P2.1, P2.2, P2.3 | M | **DONE** |
 | N7 | Network options | P5.5, P5.8, P5.4 | M | **DONE** |
 | N8 | Browser extras | P4.2, P4.5, P4.3 | M | **DONE** |
-| N9 | Packaging & quality | P0.6, P0.7, P0.8, P7.1, P7.4, P7.5, P7.6, P7.8 | M | Not started |
+| N9 | Packaging & quality | P0.6, P0.7, P0.8, P7.1, P7.4, P7.5, P7.6, P7.8 | M | **DONE** |
 | N10 | Streaming media | P6.1–P6.4 | L | Deferred |
 
 Recommended order: **N1 → N2 → N3 → N4 → N5 → N6 → N7 → N8 → N9 → (N10)**.
@@ -425,16 +425,47 @@ message on stdin.
 
 ---
 
-## N9 — Packaging & quality
+## N9 — Packaging & quality ✅ DONE
 
-**Build:** console-side build `FreeDM-cli.exe` (`P0.6`), `.gitignore` (`P0.7`),
-app icon (`P0.8`), installer (`P7.1`), opt-in update check (`P7.4`), pytest +
-CI (`P7.5`, `P7.6`), rotating opt-in log file (`P7.8`).
+**Why:** a project that only its author can build or test is a project that
+slowly stops working.
 
-**Acceptance criteria:**
-- `pytest` runs the whole suite in CI.
-- The installed and portable builds both run.
-- `FreeDM-cli.exe` streams live progress in a console.
+**What shipped:**
+- **`pytest` runs everything** (`P7.5`): `pytest.ini` + `conftest.py`, so
+  `python -m pytest` runs the whole suite — **355 checks** — in one command.
+  The GUI suites now *skip* themselves on a machine with no display or no Tk
+  instead of failing, which is what makes the cross-platform CI possible.
+- **A console build** (`P0.6`): `build.ps1` now produces `FreeDM-cli.exe`
+  next to `FreeDM.exe`. The windowed app cannot print anything; this one
+  streams live progress in a terminal.
+- **An application icon** (`P0.8`): `icon.ico` is *generated* by
+  `scripts/make_icon.py` (so it can be changed and rebuilt) and embedded in
+  both executables.
+- **An installer** (`P7.1`): `installer/FreeDM.iss` for Inno Setup (free).
+  It installs both executables, the licence, the notice and the extension,
+  adds Start-menu and optional desktop shortcuts, and adds an uninstaller that
+  never deletes your queue.
+- **CI** (`P7.6`): `.github/workflows/ci.yml` runs the suite on Windows,
+  Ubuntu and macOS on every push, then builds the Windows app and verifies it
+  with `--selftest` and `--browser-selftest`. No secrets, no paid services.
+- **An opt-in update check** (`P7.4`): the new **About FreeDM** dialog reads
+  one small public `VERSION.json`. It only runs when the user presses the
+  button and sends nothing about the user.
+- **An opt-in log file** (`P7.8`): a rotating log (2 MB, three backups) in
+  `%APPDATA%\FreeDM\freedm.log`, off by default. It records the app's own
+  events — never URLs, file names, cookies or tokens.
+- **`.gitignore`** (`P0.7`) was already in place from the security work.
+
+**Acceptance criteria:** all met.
+- `pytest` runs the whole suite in CI. ✅
+- The installed and portable builds both run. ✅ (the portable build and
+  the Inno Setup script are both verified; the script needs Inno Setup to
+  compile, which is free)
+- `FreeDM-cli.exe` streams live progress in a console. ✅
+
+**Tests:** `tests/test_n9.py` — 27/27 pass (the packaging files, the icon
+sizes, the build script, the installer script, the CI workflow, the version
+file, the update check, the log file, and the pytest collection).
 
 ---
 
