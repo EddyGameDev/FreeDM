@@ -1,10 +1,10 @@
 # FreeDM — Security Review
 
-Reviewed: 2026-10-19 · scope: the whole application (engine, GUI, loopback
-control server, browser extension, queue database, packaging).
+Reviewed: **2026-10-19** (round one, the code up to N6) and **2026-10-20**
+(round two, the modules added since - see §7). The findings and the fixes are
+below. This is a working document, not a one-off: new findings go here.
 
-This file lists what was checked, what was found, and what was fixed. It is a
-working document, not a one-off: new findings go here.
+Every finding is pinned by a test, so it cannot come back unnoticed.
 
 ---
 
@@ -21,6 +21,11 @@ working document, not a one-off: new findings go here.
 | S7 | Low | "Open File" ran a downloaded executable/script without asking | **Fixed** |
 | S8 | Low–Med | A `Cookie:` header set by hand was dropped on every redirect | **Fixed** |
 | S9 | Info | The proxy password and the token are stored in plain text | Documented |
+| **S10** | **High** | **A playlist could send the user's `Authorization` header to any host, and could point FreeDM at the local network** | **Fixed (round two)** |
+| **S11** | Medium | **The native host accepted a call from *any* installed extension** | **Fixed (round two)** |
+| **S12** | Medium | **A category name was used as a folder name without sanitising** | **Fixed (round two)** |
+| **S13** | Low | **A proxy URL that already had credentials in it was mangled** | **Fixed (round two)** |
+| **S14** | Low | The update check could be pointed at any URL | **Fixed (round two)** |
 
 ---
 
@@ -157,14 +162,136 @@ extension (`.exe`, `.bat`, `.cmd`, `.com`, `.ps1`, `.vbs`, `.js`, `.jar`,
 - The app does not verify TLS certificates out of the box — it does, but the
   API allows turning it off, and the GUI does not expose that switch.
 
----
+## 7. Round two — the modules added after N6 (2026-10-20)
 
-## 3. Rules for future changes
+The first review covered the code up to N6. Seven modules were added after it
+and had never been looked at: `network.py`, `native_host.py`, `update.py`,
+`logsetup.py`, `stream.py`, `aes.py` and `categories.py`. They are reviewed
+here.
+
+### 2.7 The streaming path (`freedm/stream.py`, the engine's stream branch)
+
+A playlist is **data from a third party**: the user chooses the playlist's
+address, but the playlist decides where the *segments* come from. That is a
+trust boundary, and two things could go wrong.
+
+**S10 (High) — the user's own headers followed the playlist to any host.**
+The engine sent `self._session_headers()` — which includes any `Authorization`
+or `Referer` the user set — to *every* segment URL. A hostile playlist could
+therefore point one segment at a host the user never chose, and FreeDM would
+hand that host the user's `Authorization` header. It could also point
+FreeDM at an address on the user's own network (a router, a NAS, the app's own
+control server) and make it fetch it.
+
+**Fixed** in two parts:
+- **The user's headers only go to the playlist's own host.** A segment on any
+  other host is fetched without them (`_stream_headers`). The session's own
+  default headers (the user agent) still go everywhere, which is harmless.
+- **A URL policy for the playlist** (`check_segment_url`): only `http` and
+  `https` are allowed (a `file://` or `ftp://` URL is refused with a clear
+  message), and a segment on a **private address** (loopback, link-local,
+  `10/8`, `172.16/12`, `192.168/16`, or a name that resolves to one) is
+  refused unless the user has ticked *"Allow segments from private
+  addresses"*. The playlist's own host is always fine — the user chose it.
+  A name is resolved once and the answer cached, so a host that points at the
+  local network is caught too.
+
+### 2.8 The native messaging host (`freedm/native_host.py`)
+
+The host is started by the browser and can do exactly one thing: start
+FreeDM.
+
+| Check | Result |
+|---|---|
+| What it can do | Only `ping` and `launch` — it never touches the queue |
+| The message format | The browser's own (a length-prefixed JSON) |
+| **Who may call it** | **S11 — fixed** |
+
+**S11 (Medium) — any installed extension could call the host.** The manifest
+listed `chrome-extension://*` and `moz-extension://*`, so *every* extension on
+the machine could start FreeDM. The wildcard is the only option for an
+unpacked extension (its id is different on every install), but it should be a
+choice, not an accident.
+
+**Fixed:** the extension now sends `chrome.runtime.id` with every handoff,
+FreeDM remembers it, and the manifest is then written with **that extension
+only**. The wildcard remains as the fallback, and the manifest carries a
+`_note` saying so - so anyone reading the file can see that the host is
+open until the extension has talked to FreeDM once.
+
+### 2.9 The update check (`freedm/update.py`)
+
+| Check | Result |
+|---|---|
+| When it runs | **Only** when the user presses the button |
+| What it fetches | The project's own `VERSION.json` |
+| What it sends | Nothing about the user - one plain GET |
+
+**S14 (Low) — the URL was a parameter.** `check_for_update(current, url=...)`
+accepted any URL, so a mistake (or a bad call) could have pointed it anywhere.
+**Fixed:** the URL is fixed to the project's own file; the function no longer
+takes one.
+
+### 2.10 The log file (`freedm/logsetup.py`)
+
+| Check | Result |
+|---|---|
+| Is it on by default | **No** — the user ticks the box in the **About** dialog |
+| Where does it go | `%APPDATA%\FreeDM\freedm.log` (per user) |
+| How big does it get | 2 MB, then it rotates; three old files are kept |
+| What does it hold | The app's own events - **never** URLs, file names, cookies or tokens (a test checks the source) |
+
+### 2.11 The proxy (`freedm/network.py`)
+
+| Check | Result |
+|---|---|
+| Where the password lives | The settings database, in plain text (S9) - documented |
+| Is the password ever shown | **No** - `summary()` leaves it out, and a test checks it |
+| Is the proxy URL ever logged | **No** |
+| **Does the URL survive a password in it** | **S13 — fixed** |
+
+**S13 (Low) — a proxy URL that already had credentials in it was mangled.**
+`http://user:pass@proxy:8080` had its `user:pass` thrown away when a user
+name was also configured, and the path was rebuilt by hand. **Fixed:** the URL
+is parsed properly, any existing userinfo is replaced rather than appended
+to, and the path is kept.
+
+### 2.12 The category rules (`freedm/categories.py`)
+
+**S12 (Medium) — a category name was used as a folder name, unsanitised.**
+The rules are the user's own, but the name becomes a *folder*, so a rule
+called `..\..\Windows\System32` would have placed a download outside the
+chosen folder, and a name with `:` or `*` would have broken the download with
+a confusing error.
+
+**Fixed:** `safe_folder_name()` replaces the characters that are illegal on
+Windows, removes `..` and falls back to `Other`. A test checks that the
+destination always stays inside the base folder.
+
+### 2.13 The AES code (`freedm/aes.py`)
+
+| Check | Result |
+|---|---|
+| Is it correct | **Yes** - it matches the FIPS-197 test vector and a reference implementation (both are in the tests) |
+| Does it touch the disk or the network | **No** - it is pure arithmetic |
+| Is a wrong answer dangerous | **No** - a wrong decryption produces a file that fails the size/checksum verification, it does not produce a *valid* wrong file by accident |
+
+---
 
 1. The control server must never send `Access-Control-Allow-Origin: *`, and
    must reject a `Host` header that is not loopback.
 2. The control token belongs in `chrome.storage.local`, never in `sync`.
 3. Do not add a browser permission that the code does not use.
-4. Anything that reaches the file system must go through `sanitize_filename`.
+4. Anything that reaches the file system must go through `sanitize_filename`
+   (or `categories.safe_folder_name` for a folder name).
 5. Secrets belong in the cookie jar, not in raw headers.
 6. Executables are never launched without an explicit confirmation.
+7. **Data that comes from a server (a playlist, a manifest) must not decide
+   where FreeDM connects, and must never carry the user's own headers to a
+   host the user did not choose.**
+8. A name that becomes a path must be sanitised, and a URL that comes from
+   elsewhere must be checked before it is fetched.
+9. The native host must name the extension that may call it, or say plainly
+   that it does not know yet.
+10. A secret (a proxy password, a token) is never written to a log, and
+    never shown in full in the interface.

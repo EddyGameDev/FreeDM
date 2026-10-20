@@ -56,19 +56,48 @@ def app_executable() -> str:
 
 
 def build_manifest(origins: list[str] | None = None) -> dict:
-    """The native messaging manifest for this installation."""
+    """The native messaging manifest for this installation.
+
+    ``origins`` names the extensions that may call the host. When the
+    extension's id is known it is listed exactly; otherwise the wildcard is
+    used, which means *any* installed extension could call the host - that
+    is only acceptable because the host can do no more than start FreeDM."""
     program = app_executable()
     if not getattr(sys, "frozen", False):
         # A source checkout: the browser must start the interpreter.
         program = f'{sys.executable} "{program}" --native-host'
+    if origins:
+        allowed = list(origins)
+        note = "Only the listed extension may call this host."
+    else:
+        allowed = ["chrome-extension://*", "moz-extension://*"]
+        note = ("The extension id is not known yet, so ANY installed "
+                "extension may call this host. The host can only start "
+                "FreeDM. Reinstall the native host after the extension has "
+                "talked to FreeDM once, to narrow this down.")
     return {
         "name": HOST_NAME,
         "description": "Starts FreeDM so the browser can hand over downloads.",
         "path": program,
         "type": "stdio",
-        "allowed_origins": list(origins or ["chrome-extension://*",
-                                            "moz-extension://*"]),
+        "allowed_origins": allowed,
+        "_note": note,
     }
+
+
+def extension_origins(extension_id: str | None) -> list[str] | None:
+    """The origins that may call the host, for a known extension id.
+
+    Chrome and Edge use ``chrome-extension://<id>`` and Firefox uses
+    ``moz-extension://<uuid>``; a Chrome/Edge extension id also works in
+    Firefox, so both spellings are listed."""
+    if not extension_id:
+        return None
+    extension_id = str(extension_id).strip()
+    if not extension_id:
+        return None
+    return [f"chrome-extension://{extension_id}",
+            f"moz-extension://{extension_id}"]
 
 
 def write_manifest(origins: list[str] | None = None) -> str:
@@ -91,9 +120,18 @@ def install_host(origins: list[str] | None = None) -> tuple[bool, str]:
 
     Returns ``(ok, message)``. Registration needs the registry (Windows) or
     the equivalent file (Linux/macOS); when it is not possible the manifest
-    is still written so the user can register it by hand."""
+    is still written so the user can register it by hand.
+
+    ``origins`` should name the extension that may call the host (see
+    :func:`extension_origins`)."""
     path = write_manifest(origins)
     message = f"Native host manifest written to:\n{path}"
+    if origins:
+        message += "\nOnly these extensions may call it:\n  " + ", ".join(origins)
+    else:
+        message += ("\nThe extension id is not known, so any installed "
+                    "extension may call the host. The extension tells "
+                    "FreeDM its id the first time it hands a download over.")
     if sys.platform.startswith("win"):
         try:
             import winreg

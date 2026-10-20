@@ -90,6 +90,9 @@ async function handleCreated(item) {
 
   const body = {
     url: item.url,
+    // FreeDM needs this to register the native host for *this* extension
+    // only, instead of any installed extension.
+    extension_id: chrome.runtime.id,
     cookies,
     referer: item.referrer || item.initiator || undefined,
     user_agent: navigator.userAgent,
@@ -172,6 +175,7 @@ async function handleMenuClick(info) {
 
   const body = {
     url,
+    extension_id: chrome.runtime.id,
     cookies: await cookiesFor(url),
     referer: info.pageUrl || undefined,
     user_agent: navigator.userAgent,

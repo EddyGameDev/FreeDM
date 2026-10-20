@@ -120,6 +120,9 @@ limited. **Planned** = not yet built (see `ROADMAP.md`).
 | A109 | A stream continues after an interruption | Implemented (N10) | `freedm/engine.py` → `_save_stream_state` |
 | A110 | AES-128 decryption without a heavy dependency | Implemented (N10) | `freedm/aes.py`; `freedm/stream.py` → `decrypt_aes128` |
 | A111 | Find a playlist URL in a web page | Implemented (N10) | `freedm/stream.py` → `sniff_page` |
+| A112 | A playlist may only name http(s) URLs and not private addresses | Implemented (G1) | `freedm/stream.py` → `check_segment_url` |
+| A113 | The user's headers never follow a playlist to another host | Implemented (G1) | `freedm/engine.py` → `_stream_headers` |
+| A114 | The native host names the extension that may call it | Implemented (G1) | `freedm/native_host.py` → `extension_origins` |
 
 ### Segment sizing rules (`freedm/engine.py`)
 - Files ≤ `MIN_SEGMENT_SIZE` (1 MB) are downloaded as a single stream.
@@ -277,7 +280,8 @@ results do not depend on third-party sites.
 | **N8 suite: `tests/test_n8.py` (32 tests)** | **Pass** |
 | **N9 suite: `tests/test_n9.py` (30 tests)** | **Pass** |
 | **N10 suite: `tests/test_n10.py` (24 tests)** | **Pass** |
-| The whole suite runs with `python -m pytest` | Pass — 384 tests |
+| **Security suite 2: `tests/test_security2.py` (40 tests)** | **Pass** |
+| The whole suite runs with `python -m pytest` | Pass — 424 tests |
 | **Changelog suite: `tests/test_changelog.py` (11 tests)** | **Pass** |
 | A future start time holds the job in `scheduled` | Pass — released when the time comes |
 | A closed window blocks every start; Start Now overrides it | Pass |

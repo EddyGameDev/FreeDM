@@ -105,6 +105,11 @@ class App:
         self.proxy_pass = self.prefs.get("proxy_pass") or ""
         self.proxy_bypass = (self.prefs.get("proxy_bypass") or "").strip()
         self.prefer_ipv4 = bool(self.prefs.get("prefer_ipv4", True))
+        # N11: the id of the extension that talked to us, so the native
+        # host can be registered for that extension alone.
+        self.extension_id = (self.prefs.get("extension_id") or "").strip()
+        self.allow_private_segments = bool(
+            self.prefs.get("allow_private_segments", False))
         self._apply_network_settings()
         # N9: the log file is opt-in; it is off unless the user turned it on.
         self.log_var = tk.BooleanVar(value=bool(self.prefs.get("log_enabled")))
@@ -647,6 +652,7 @@ class App:
         pass_var = tk.StringVar(value=self.proxy_pass)
         bypass_var = tk.StringVar(value=self.proxy_bypass)
         ipv4_var = tk.BooleanVar(value=self.prefer_ipv4)
+        private_var = tk.BooleanVar(value=self.allow_private_segments)
 
         rows = (
             ("Proxy:", url_var),
@@ -672,6 +678,10 @@ class App:
             win, text="Prefer IPv4 when a host has both (a broken IPv6 route "
                       "is a common cause of hangs)",
             variable=ipv4_var).pack(anchor="w", padx=12, pady=(6, 0))
+        ttk.Checkbutton(
+            win, text="Allow segments from private addresses "
+                      "(a stream on your own network)",
+            variable=private_var).pack(anchor="w", padx=12)
 
         status = ttk.Label(win, text="", foreground="#a00")
         status.pack(anchor="w", padx=12, pady=(4, 0))
@@ -685,11 +695,13 @@ class App:
             self.proxy_pass = pass_var.get()
             self.proxy_bypass = bypass_var.get().strip()
             self.prefer_ipv4 = ipv4_var.get()
+            self.allow_private_segments = private_var.get()
             self._apply_network_settings()
             save_settings(self.store, proxy_url=self.proxy_url,
                           proxy_user=self.proxy_user, proxy_pass=self.proxy_pass,
                           proxy_bypass=self.proxy_bypass,
-                          prefer_ipv4=self.prefer_ipv4)
+                          prefer_ipv4=self.prefer_ipv4,
+                          allow_private_segments=self.allow_private_segments)
             status.configure(text="Saved. " + PROXY.summary(), foreground="#080")
             self._notify_status("Network settings saved")
 
@@ -908,7 +920,9 @@ class App:
         dl = Download(url, dest_dir=dest, num_threads=threads,
                       speed_limit=self.default_limit, store=self.store,
                       checksum=self.default_checksum if checksum is None
-                      else checksum, dest_resolver=resolver, **kwargs)
+                      else checksum, dest_resolver=resolver,
+                      allow_private_segments=self.allow_private_segments,
+                      **kwargs)
         self._enqueue(dl)
         return dl
 
@@ -1237,8 +1251,9 @@ class App:
 
     def _install_native_host(self) -> None:
         """Register the native messaging host so the extension can start us."""
+        origins = native_host.extension_origins(self.extension_id)
         try:
-            ok, message = native_host.install_host()
+            ok, message = native_host.install_host(origins)
         except Exception as exc:       # noqa: BLE001
             messagebox.showerror(APP_NAME, f"Could not install: {exc}")
             return
@@ -1323,6 +1338,12 @@ class App:
     def _add_from_browser(self, payload: dict) -> None:
         """Create a download from a validated extension payload (main thread)."""
         url = payload.get("url") or ""
+        extension_id = payload.get("extension_id") or ""
+        if extension_id and extension_id != self.extension_id:
+            # N11: the extension tells us its id, so the native host can be
+            # registered for that extension only.
+            self.extension_id = extension_id
+            save_settings(self.store, extension_id=extension_id)
         headers = dict(payload.get("headers") or {})
         if payload.get("referer"):
             headers.setdefault("Referer", payload["referer"])
@@ -1334,7 +1355,8 @@ class App:
             num_threads=payload.get("threads") or self.threads_var.get(),
             headers=headers, cookies=payload.get("cookies"),
             speed_limit=self.default_limit, checksum=self.default_checksum,
-            dest_resolver=self._dest_resolver(), store=self.store)
+            dest_resolver=self._dest_resolver(),
+            allow_private_segments=self.allow_private_segments, store=self.store)
         self._enqueue(dl)
         self.status_var.set(f"Browser: {url}")
 

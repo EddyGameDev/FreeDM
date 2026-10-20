@@ -89,6 +89,51 @@ First public build.
 - The windowed build has no console, so CLI progress is silent in the
   packaged app.
 
+## [v1.6.0] - 2026-10-20
+
+Security round two: the modules added after the first review (the network
+options, the native host, the update check, the log file, streaming and the
+category rules) are reviewed, and five findings are fixed.
+
+### Build
+
+- `FreeDM-1.6.0.exe` - Windows x64, single file, no installer (18 MB).
+- SHA-256: `BUILD_HASH_v1_6_0`
+- Verify with: `certutil -hashfile FreeDM-1.6.0.exe SHA256`
+- `FreeDM-cli.exe` - the console build. SHA-256: `BUILD_HASH_CLI_16`
+- `FreeDM-Setup-1.6.0.exe` - the installer. SHA-256: `BUILD_HASH_SETUP_16`
+- Source: <https://github.com/EddyGameDev/FreeDM>
+
+### Fixed
+
+- **A playlist could take your `Authorization` header to another host.** A
+  playlist is data from a third party: it now chooses where the segments
+  come from, but the headers you set only go to the playlist's *own* host.
+- **A playlist could point FreeDM at your local network.** Only `http` and
+  `https` URLs are allowed now, and a segment on a private address (loopback,
+  `10/8`, `172.16/12`, `192.168/16`, or a name that resolves to one) is
+  refused with a clear message. The playlist's own host is always fine, and
+  there is a new setting to allow private addresses on purpose.
+- **Any installed extension could call the native host.** The extension now
+  reports its id and the manifest names *that* extension. Until the extension
+  has talked to FreeDM once, the manifest still allows any extension - and it
+  says so, in the manifest itself.
+- **A category name was used as a folder name without being sanitised**, so a
+  rule could have placed a download outside the chosen folder. Category names
+  are now sanitised.
+- **A proxy URL that already had a password in it was mangled.**
+
+### Changed
+
+- The update check always reads the project's own `VERSION.json`; the address
+  can no longer be changed by a caller.
+- New setting: *"Allow segments from private addresses"* (off by default).
+
+### Notes
+
+- The full review, including everything that was checked and found sound, is
+  in `docs/SECURITY.md`. The findings are pinned by `tests/test_security2.py`.
+
 ## [v1.5.0] - 2026-10-20
 
 Streaming media: HLS and DASH playlists are downloaded into one file.

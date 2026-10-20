@@ -151,8 +151,13 @@ def _normalise(payload: dict) -> dict:
     if dest_dir and not os.path.isdir(dest_dir):
         dest_dir = None
 
+    extension_id = str(payload.get("extension_id") or "").strip()
+    if extension_id and len(extension_id) > 128:
+        extension_id = ""
+
     return {
         "url": url,
+        "extension_id": extension_id or None,
         "cookies": cookies,
         "referer": str(payload.get("referer") or "") or None,
         "user_agent": str(payload.get("user_agent") or "") or None,

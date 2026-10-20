@@ -17,7 +17,7 @@ acceptance test.
 
 | Date | Goal | Result |
 |---|---|---|
-| next | G1 — Security round two | Not started |
+| 2026-10-20 | **G1 — Security round two** | **DONE.** The seven modules added after N6 are reviewed and documented (S10–S14 in `docs/SECURITY.md`). A playlist can no longer carry the user's `Authorization` header to another host, may only name `http(s)` URLs, and may not reach a private address unless the user allows it. The native host now names the extension that may call it. Category folder names are sanitised. 40 new tests. |
 | next | G2 — Release polish | Not started |
 | next | G3 — Split the two large modules | Not started |
 | next | G4 — Streams in the interface | Not started |
@@ -28,7 +28,7 @@ acceptance test.
 
 ---
 
-## G1 — Security round two
+## G1 — Security round two ✅ DONE
 
 **Why:** [`REVIEW.md`](REVIEW.md) finding **R1**. The first review covered
 N1–N6. Seven modules have been added since — `network.py`,
@@ -51,13 +51,32 @@ a playlist is data from a server, and FreeDM fetches whatever it names.
   cookies or tokens; the proxy password is the only secret on disk.
 - Add the new findings to `tests/test_security.py` so they cannot come back.
 
-**Acceptance criteria:**
-- Every module in `freedm/` is covered by a section of `docs/SECURITY.md`.
+**What was found and fixed** (the numbers are the findings in
+`docs/SECURITY.md`):
+- **S10 (High)** — a playlist could send the user's `Authorization` header to
+  any host it named, and could point FreeDM at the local network. Now the
+  user's headers only go to the playlist's own host, only `http(s)` URLs are
+  allowed, and a private address is refused unless the user ticks
+  *"Allow segments from private addresses"*.
+- **S11 (Medium)** — the native host accepted a call from any installed
+  extension. The extension now reports its id and the manifest names it.
+- **S12 (Medium)** — a category name was used as a folder name
+  unsanitised, so a rule could have pointed a download outside the chosen
+  folder. It is sanitised now.
+- **S13 (Low)** — a proxy URL that already had credentials in it was
+  mangled.
+- **S14 (Low)** — the update check could be pointed at any URL; it is fixed
+  to the project's own file now.
+
+**Acceptance criteria:** all met.
+- Every module in `freedm/` is covered by a section of `docs/SECURITY.md`. ✅
 - A playlist that names a `file://` or a non-http(s) URL is refused, and the
-  test says so.
+  test says so. ✅
 - The native host manifest names the extension it belongs to, or explains
-  why it cannot.
-- `docs/SECURITY.md` is dated after the last code change it reviewed.
+  why it cannot. ✅
+- `docs/SECURITY.md` is dated after the last code change it reviewed. ✅
+
+**Tests:** `tests/test_security2.py` — 40/40 pass.
 
 ---
 

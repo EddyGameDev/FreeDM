@@ -83,7 +83,8 @@ F:\OMNI Config\Plan\FreeDM\
 │   ├── test_n7.py              # N7 suite: proxy, address family, mirrors
 │   ├── test_n8.py              # N8 suite: Firefox, context menu, native host
 │   ├── test_n10.py             # N10 suite: HLS, DASH, AES
-│   ├── test_security.py        # security regressions (see docs/SECURITY.md)
+│   ├── test_security.py        # security regressions, round one
+│   └── test_security2.py       # security regressions, round two (G1)
 │   ├── test_changelog.py       # release-notes tooling
 │   ├── gui_testcase.py        # shared GUI test base (temp folder, no downloads)
 │   └── test_w1.py              # W1 suite: control server, token, payload
@@ -321,9 +322,12 @@ message.
 | `read_message()` / `write_message()` | the length-prefixed JSON wire format |
 | `main()` | the `--native-host` entry point |
 ### `SECURITY.md`
-The security review of 2026-10-19: every finding, what was checked, what was
-found and what was fixed, plus the rules future changes must keep. The
-regressions are pinned by `tests/test_security.py`.
+The security review, in two rounds: 2026-10-19 (the code up to N6) and
+2026-10-20 (the modules added since — the network options, the native host,
+the update check, the log file, streaming and the category rules). Every
+finding, what was checked, what was found and what was fixed, plus the rules
+future changes must keep. The regressions are pinned by
+`tests/test_security.py` and `tests/test_security2.py`.
 
 ### `freedm/stream.py` — streaming media (N10)
 Parses the playlists and works out where the segments are.

@@ -85,6 +85,7 @@ class ProxyConfig:
 
     def proxies(self) -> dict:
         """The ``requests`` proxy mapping for the configured proxy."""
+        from urllib.parse import quote
         with self._lock:
             if not self.url:
                 return {}
@@ -92,14 +93,16 @@ class ProxyConfig:
             username, password = self.username, self.password
         if "://" not in url:
             url = "http://" + url
+        scheme, _, rest = url.partition("://")
+        netloc, slash, path = rest.partition("/")
+        host = netloc.rsplit("@", 1)[-1]        # drop any existing userinfo
         if username:
-            scheme, _, rest = url.partition("://")
-            from urllib.parse import quote
-            netloc = rest.split("/", 1)[0]
-            path = rest[len(netloc):]
-            host = netloc.rsplit("@", 1)[-1]
-            credentials = f"{quote(username, safe='')}:{quote(password, safe='')}"
-            url = f"{scheme}://{credentials}@{host}{path}"
+            credentials = (f"{quote(username, safe='')}:"
+                           f"{quote(password, safe='')}")
+            netloc = f"{credentials}@{host}"
+        else:
+            netloc = host
+        url = f"{scheme}://{netloc}{slash}{path}"
         return {"http": url, "https": url}
 
     def proxies_for(self, url: str) -> dict | None:

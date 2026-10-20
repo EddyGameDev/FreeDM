@@ -24,6 +24,7 @@ from freedm.verify import (ALGORITHMS, parse_checksum, file_digest, verify_size,
 from freedm.network import PROXY, mirror_path
 from freedm.stream import (StreamError, parse_m3u8, parse_mpd, is_stream_url,
                            decrypt_aes128, key_from_data,
+                           check_segment_url, host_of as stream_host_of,
                            output_name as stream_output_name)
 
 # ---------------------------------------------------------------------------
@@ -260,7 +261,8 @@ class Download:
                  verify_ssl: bool = True, on_existing: str = "rename",
                  confirm_overwrite=None, cookies=None,
                  store=None, job_id: int | None = None, checksum: str = "",
-                 dest_resolver=None, mirrors=None):
+                 dest_resolver=None, mirrors=None,
+                 allow_private_segments: bool = False):
         """on_existing: 'rename' (safe default) | 'overwrite' | 'cancel'.
         confirm_overwrite: optional callable(path) -> action, called when the
         destination already exists; overrides on_existing.
@@ -340,6 +342,8 @@ class Download:
 
         # N10: streaming media (HLS/DASH) instead of a single file.
         self.is_stream = False
+        # G1: a playlist may only reach the local network if the user says so.
+        self.allow_private_segments = bool(allow_private_segments)
         self.stream_playlist = None
         self.stream_segments = 0
         self.stream_encrypted = False
@@ -659,9 +663,25 @@ class Download:
         except OSError:
             pass
 
+    def _stream_headers(self, url: str) -> dict:
+        """The user's own headers only go to the playlist's own host.
+
+        A playlist is data from a third party: it must not be able to make
+        FreeDM send the user's ``Authorization`` (or ``Referer``) header to a
+        host the user never chose."""
+        if stream_host_of(url) == stream_host_of(self._request_url):
+            return self._session_headers()
+        return {}
+
+    def _check_stream_url(self, url: str) -> str:
+        """Apply the playlist URL policy (see freedm/stream.py)."""
+        return check_segment_url(url, self._request_url,
+                                allow_private=bool(self.allow_private_segments))
+
     def _fetch_segment(self, segment, index: int) -> bytes:
         """Fetch one segment, decrypting it when the playlist says so."""
-        headers = self._session_headers()
+        segment.url = self._check_stream_url(segment.url)
+        headers = self._stream_headers(segment.url)
         if segment.byte_range:
             length, offset = segment.byte_range
             headers["Range"] = f"bytes={offset}-{offset + length - 1}"
@@ -693,8 +713,9 @@ class Download:
 
     def _fetch_key(self, segment) -> bytes:
         """Fetch an AES-128 key."""
+        segment.key_url = self._check_stream_url(segment.key_url)
         response = self.session.get(
-            segment.key_url, headers=self._session_headers(),
+            segment.key_url, headers=self._stream_headers(segment.key_url),
             timeout=(CONNECT_TIMEOUT, READ_TIMEOUT),
             proxies=self._proxies_for(segment.key_url),
             verify=self.verify_ssl, allow_redirects=True)

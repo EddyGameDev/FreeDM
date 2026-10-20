@@ -111,6 +111,98 @@ def _absolute(url: str, base: str) -> str:
     return urllib.parse.urljoin(base, url)
 
 
+def resolve_url(url: str, base: str = "") -> str:
+    """Resolve a playlist URL and refuse anything that is not http(s).
+
+    A playlist is data from a third party, so it must never be able to
+    point FreeDM at another protocol (a local file, say)."""
+    absolute = _absolute(url, base)
+    scheme = urllib.parse.urlparse(absolute).scheme.lower()
+    if scheme not in ("http", "https"):
+        raise StreamError(
+            f"only http and https URLs are allowed in a playlist, not "
+            f"{scheme or 'a scheme-less URL'}: {absolute}")
+    return absolute
+
+
+def host_of(url: str) -> str:
+    """The host of a URL (lower case, without the port)."""
+    try:
+        return (urllib.parse.urlparse(url or "").hostname or "").lower()
+    except ValueError:
+        return ""
+
+
+_PRIVATE_NAMES = {"localhost", "localhost.localdomain", "ip6-localhost",
+                  "ip6-loopback"}
+_resolved: dict[str, bool] = {}
+
+
+def is_private_host(host: str) -> bool:
+    """True for a loopback, link-local, private or otherwise reserved address.
+
+    A name is resolved once and the answer cached, so a host that points at
+    the local network is caught as well."""
+    import ipaddress
+    import socket
+
+    name = (host or "").strip("[]").lower()
+    if not name:
+        return False
+    if name in _PRIVATE_NAMES:
+        return True
+    try:
+        ip = ipaddress.ip_address(name)
+    except ValueError:
+        pass
+    else:
+        return bool(ip.is_private or ip.is_loopback or ip.is_link_local
+                    or ip.is_reserved or ip.is_multicast or
+                    ip.is_unspecified)
+    if name in _resolved:
+        return _resolved[name]
+    private = False
+    try:
+        infos = socket.getaddrinfo(name, None)
+    except OSError:
+        infos = []
+    for info in infos:
+        try:
+            ip = ipaddress.ip_address(info[4][0])
+        except (ValueError, IndexError):
+            continue
+        if (ip.is_private or ip.is_loopback or ip.is_link_local
+                or ip.is_reserved):
+            private = True
+            break
+    _resolved[name] = private
+    return private
+
+
+def check_segment_url(url: str, playlist_url: str = "",
+                      allow_private: bool = False) -> str:
+    """Check one URL that a playlist named.
+
+    The playlist's own host is always fine - the user chose it. Any *other*
+    host must be a public address, unless the user has allowed private
+    addresses, because a hostile playlist could otherwise use FreeDM to
+    reach the user's local network."""
+    absolute = resolve_url(url, playlist_url)
+    if allow_private:
+        return absolute
+    host = host_of(absolute)
+    if not host:
+        return absolute
+    if host and host == host_of(playlist_url):
+        return absolute
+    if is_private_host(host):
+        raise StreamError(
+            f"the playlist points at a private address ({host}); "
+            f"FreeDM will not connect to it. Turn on "
+            f"'Allow segments from private addresses' if you trust it.")
+    return absolute
+
+
 def parse_m3u8(text: str, base_url: str = "") -> Playlist:
     """Parse an HLS playlist (master or media).
 

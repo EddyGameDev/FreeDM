@@ -6,7 +6,7 @@
 ; Start-menu shortcut, an uninstaller and no system-wide changes.
 
 #define AppName "FreeDM"
-#define AppVersion "1.5.0"
+#define AppVersion "1.6.0"
 #define AppPublisher "outlawproductionstwo-hash"
 #define AppURL "https://github.com/EddyGameDev/FreeDM"
 #define AppExeName "FreeDM.exe"

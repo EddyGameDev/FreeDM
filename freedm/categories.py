@@ -116,6 +116,21 @@ def load_rules(text: str | None) -> dict[str, list[str]]:
     return rules
 
 
+def safe_folder_name(name: str) -> str:
+    """Turn a category name into a safe folder name.
+
+    A category name comes from the user's own rules, but it is used as a
+    *folder name*, so it must not be able to point outside the download
+    folder (``..\\..\\Windows``) and must not contain characters that are
+    illegal on Windows (``:*?"<>|``)."""
+    import re
+    cleaned = re.sub(r'[<>:"/\\|?*\x00-\x1f]', "_", str(name or "").strip())
+    cleaned = cleaned.strip(" .")
+    while ".." in cleaned:
+        cleaned = cleaned.replace("..", ".")
+    return cleaned or "Other"
+
+
 def classify(filename: str, rules: dict[str, list[str]] | None = None) -> str:
     """Return the category a file name belongs to."""
     rules = rules or default_rules()
@@ -134,7 +149,7 @@ def destination_for(filename: str, base_dir: str,
     category = classify(filename, rules)
     if not category:
         return base_dir
-    return os.path.join(base_dir, category)
+    return os.path.join(base_dir, safe_folder_name(category))
 
 
 def matches_filter(name: str, url: str, status: str, needle: str = "",
